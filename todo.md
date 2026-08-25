@@ -29,3 +29,7 @@
 - [x] Medir a duração do preparo da imagem e da resposta de visão para validar a meta operacional.
 - [x] Recuperar a qualidade de leitura degradada pela redução de resolução e compressão.
 - [x] Ajustar a estratégia de velocidade sem reduzir a confiabilidade dos caracteres lidos.
+- [x] Corrigir a extração que está retornando folha e placa como “Não identificada”.
+- [x] Restaurar a leitura de números manuscritos dentro da sequência da folha.
+- [x] Aproximar a tela de resultado e seus estados do layout do aplicativo de referência.
+- [x] Preservar o tempo atual enquanto a qualidade de leitura é corrigida.

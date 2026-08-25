@@ -48,9 +48,12 @@ export default function ResultScreen() {
           <Text style={styles.statusText}>{result.message}</Text>
         </View>
         <View style={styles.sequenceSection}>
-          <Text style={styles.sectionTitle}>Comparação das sequências</Text>
-          <View style={styles.sequenceCard}><View style={styles.sequenceHeader}><MaterialIcons name="description" size={18} color="#0056D2" /><Text style={styles.sequenceLabel}>Folha impressa</Text></View><Text style={styles.sequenceValue}>{result.sheet ?? "Não identificada"}</Text></View>
-          <View style={styles.sequenceCard}><View style={styles.sequenceHeader}><MaterialIcons name="directions-car" size={18} color="#0056D2" /><Text style={styles.sequenceLabel}>Placa Mercosul</Text></View><Text style={styles.sequenceValue}>{result.plate ?? "Não identificada"}</Text></View>
+          <Text style={styles.sectionTitle}>Comparação caractere a caractere</Text>
+          <View style={styles.comparisonCard}>
+            <View style={styles.sequenceRow}><View style={styles.sequenceHeader}><MaterialIcons name="description" size={18} color="#0056D2" /><Text style={styles.sequenceLabel}>Folha impressa</Text></View><Text style={styles.sequenceValueInline}>{result.sheet ?? "Não identificada"}</Text></View>
+            <View style={styles.sequenceDivider} />
+            <View style={styles.sequenceRow}><View style={styles.sequenceHeader}><MaterialIcons name="directions-car" size={18} color="#0056D2" /><Text style={styles.sequenceLabel}>Placa Mercosul</Text></View><Text style={[styles.sequenceValueInline, result.status === "divergent" && { color: ui.color }]}>{result.plate ?? "Não identificada"}</Text></View>
+          </View>
         </View>
         <View style={styles.gridSection}>
           <View style={styles.gridHeader}><Text style={styles.sectionTitle}>Posição por posição</Text><Text style={[styles.gridHint, { color: ui.color }]}>{result.status === "approved" ? "Tudo confere" : result.status === "divergent" ? "Veja as diferenças" : "Leitura insuficiente"}</Text></View>
@@ -59,7 +62,7 @@ export default function ResultScreen() {
               const state = character.state;
               const background = state === "match" ? "#EAF8F0" : state === "different" ? "#FFF0EF" : "#F0F3F7";
               const color = state === "match" ? "#178A4B" : state === "different" ? "#C93737" : "#627089";
-              return <View key={character.position} style={[styles.characterBox, { backgroundColor: background }]}><Text style={styles.position}>{character.position}</Text><Text style={[styles.character, { color }]}>{state === "unknown" ? "–" : character.sheet}</Text><Text style={[styles.characterSecondary, { color }]}>{state === "unknown" ? "–" : character.plate}</Text></View>;
+              return <View key={character.position} style={[styles.characterBox, { backgroundColor: background }]}><Text style={styles.position}>{character.position}</Text><Text style={[styles.character, { color }]}>{state === "unknown" ? "–" : character.plate}</Text></View>;
             })}
           </View>
         </View>
@@ -92,10 +95,12 @@ const styles = StyleSheet.create({
   statusText: { color: "#627089", fontSize: 14, lineHeight: 20, marginTop: 7, textAlign: "center" },
   sequenceSection: { gap: 10 },
   sectionTitle: { color: "#142033", fontSize: 16, fontWeight: "800" },
-  sequenceCard: { backgroundColor: "#FFFFFF", borderColor: "#E4E9F2", borderRadius: 16, borderWidth: 1, padding: 14 },
+  comparisonCard: { backgroundColor: "#FFFFFF", borderColor: "#E4E9F2", borderRadius: 18, borderWidth: 1, overflow: "hidden" },
+  sequenceRow: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 15 },
   sequenceHeader: { alignItems: "center", flexDirection: "row", gap: 7 },
   sequenceLabel: { color: "#627089", fontSize: 13, fontWeight: "600" },
-  sequenceValue: { color: "#142033", fontSize: 24, fontWeight: "800", letterSpacing: 1.8, marginTop: 7 },
+  sequenceValueInline: { color: "#142033", fontSize: 20, fontWeight: "800", letterSpacing: 1.1, marginLeft: 10, textAlign: "right" },
+  sequenceDivider: { backgroundColor: "#E4E9F2", height: 1, marginHorizontal: 16 },
   gridSection: { gap: 12 },
   gridHeader: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
   gridHint: { fontSize: 12, fontWeight: "700" },
@@ -103,7 +108,6 @@ const styles = StyleSheet.create({
   characterBox: { alignItems: "center", borderRadius: 12, flex: 1, minHeight: 74, paddingTop: 6 },
   position: { color: "#8994A8", fontSize: 10, fontWeight: "700" },
   character: { fontSize: 18, fontWeight: "800", marginTop: 5 },
-  characterSecondary: { fontSize: 11, fontWeight: "700", opacity: 0.74 },
   metrics: { alignItems: "center", backgroundColor: "#FFFFFF", borderColor: "#E4E9F2", borderRadius: 18, borderWidth: 1, flexDirection: "row", justifyContent: "space-evenly", paddingVertical: 17 },
   metric: { alignItems: "center", flex: 1 },
   metricValue: { color: "#142033", fontSize: 21, fontWeight: "800" },
@@ -117,4 +121,3 @@ const styles = StyleSheet.create({
   primaryPressed: { opacity: 0.9, transform: [{ scale: 0.98 }] },
   pressed: { opacity: 0.7 },
 });
-

@@ -13,7 +13,7 @@ const ANALYSIS_SCHEMA = z.object({
   knownSheet: z.string().min(7).max(7).optional(),
 });
 
-const COMMON_RULES = `A sequência segue obrigatoriamente o padrão ABC1D23: letras nas posições 1, 2, 3 e 5; números nas posições 4, 6 e 7. Ignore outros textos, números, códigos e datas. Examine com atenção 1/I, 0/O, 8/B e 5/S e use o tipo esperado na posição. G e C são letras válidas e distintas; nunca trate G e C como iguais. Não invente caracteres.`;
+const COMMON_RULES = `A sequência segue obrigatoriamente o padrão ABC1D23: letras nas posições 1, 2, 3 e 5; números nas posições 4, 6 e 7. Ignore outros textos, números, códigos e datas. Examine com atenção 1/I, 0/O, 8/B e 5/S e use o tipo esperado na posição. G e C são letras válidas e distintas; nunca trate G e C como iguais. A sequência da folha pode estar preenchida à mão: leia algarismos manuscritos e use o padrão da placa para decidir o melhor caractere. Não deixe um campo vazio apenas por o algarismo ser manuscrito; só devolva vazio se ele realmente não puder ser distinguido.`;
 
 const FULL_EXTRACTION_PROMPT = `Você é um leitor preciso de placas Mercosul brasileiras. Receberá uma única fotografia com uma folha impressa do sistema e uma placa Mercosul física. Leia as duas sequências de 7 caracteres, uma na folha e uma na placa.
 
@@ -28,7 +28,11 @@ ${COMMON_RULES} Se não houver leitura suficiente, devolva string vazia e confia
 function parseModelJson(content: unknown): Record<string, unknown> {
   if (typeof content !== "string" || !content) return {};
   try {
-    const parsed = JSON.parse(content);
+    const trimmed = content.trim();
+    const firstBrace = trimmed.indexOf("{");
+    const lastBrace = trimmed.lastIndexOf("}");
+    const json = firstBrace >= 0 && lastBrace > firstBrace ? trimmed.slice(firstBrace, lastBrace + 1) : trimmed;
+    const parsed = JSON.parse(json);
     return parsed && typeof parsed === "object" ? parsed as Record<string, unknown> : {};
   } catch {
     return {};
@@ -51,7 +55,7 @@ export const appRouter = router({
       if (input.plateCropBase64 && input.knownSheet) {
         const fallbackResponse = await invokeLLM({
           model: "gemini-3-flash-preview",
-          maxTokens: 120,
+          maxTokens: 768,
           messages: [
             { role: "system", content: PLATE_FALLBACK_PROMPT },
             {
@@ -77,7 +81,7 @@ export const appRouter = router({
 
       const fullResponse = await invokeLLM({
         model: "gemini-3-flash-preview",
-        maxTokens: 160,
+        maxTokens: 1024,
         messages: [
           { role: "system", content: FULL_EXTRACTION_PROMPT },
           {
@@ -90,7 +94,9 @@ export const appRouter = router({
         ],
         response_format: { type: "json_object" },
       });
-      const result = buildConferenceResult(parseModelJson(fullResponse.choices[0]?.message.content));
+      const extracted = parseModelJson(fullResponse.choices[0]?.message.content);
+      if (!Object.keys(extracted).length) console.warn("[conference] vision response did not contain usable JSON");
+      const result = buildConferenceResult(extracted);
       console.info(`[conference] full analysis completed in ${Math.round(performance.now() - startedAt)}ms`);
       return result;
     }),
