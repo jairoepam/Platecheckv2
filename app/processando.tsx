@@ -39,7 +39,9 @@ export default function ProcessingScreen() {
   const fallbackRequested = useRef(false);
   const analysis = trpc.conference.analyze.useMutation({
     onSuccess: async (result) => {
-      if (!fallbackRequested.current && result.status === "inconclusive" && pending) {
+      const containsCriticalWh = /[WH]/.test(`${result.sheet ?? ""}${result.plate ?? ""}`);
+      const needsFocusedVerification = result.status === "inconclusive" || (result.status === "approved" && containsCriticalWh);
+      if (!fallbackRequested.current && needsFocusedVerification && pending) {
         try {
           fallbackRequested.current = true;
           const crops = await createFocusedCrops(pending.imageUri, pending.imageWidth, pending.imageHeight);

@@ -14,7 +14,7 @@ const ANALYSIS_SCHEMA = z.object({
   knownSheet: z.string().min(7).max(7).optional(),
 });
 
-const COMMON_RULES = `A sequência segue obrigatoriamente o padrão ABC1D23: letras nas posições 1, 2, 3 e 5; números nas posições 4, 6 e 7. Ignore outros textos, números, códigos e datas. Examine com atenção 1/I, 0/O, 8/B e 5/S e use o tipo esperado na posição. G e C são letras válidas e distintas; nunca trate G e C como iguais. A sequência da folha pode estar preenchida à mão: leia algarismos manuscritos e use o padrão da placa para decidir o melhor caractere. Não deixe um campo vazio apenas por o algarismo ser manuscrito; só devolva vazio se ele realmente não puder ser distinguido.`;
+const COMMON_RULES = `A sequência segue obrigatoriamente o padrão ABC1D23: letras nas posições 1, 2, 3 e 5; números nas posições 4, 6 e 7. Ignore outros textos, números, códigos e datas. Examine com atenção 1/I, 0/O, 8/B e 5/S e use o tipo esperado na posição. G e C são letras válidas e distintas; nunca trate G e C como iguais. W e H também são letras distintas e nunca equivalentes: W possui traços diagonais formando vales; H possui duas hastes e uma barra horizontal. Leia folha e placa de forma independente e nunca altere uma leitura para fazê-la coincidir com a outra. Se existir qualquer dúvida visual entre W e H em qualquer item, marque whAmbiguous como true. A sequência da folha pode estar preenchida à mão: leia algarismos manuscritos e use o padrão da placa para decidir o melhor caractere. Não deixe um campo vazio apenas por o algarismo ser manuscrito; só devolva vazio se ele realmente não puder ser distinguido.`;
 
 const FULL_EXTRACTION_PROMPT = `Você é um leitor preciso de placas Mercosul brasileiras. Receberá uma única fotografia com uma folha impressa do sistema e uma placa Mercosul física. Leia as duas sequências de 7 caracteres, uma na folha e uma na placa.
 
@@ -40,8 +40,9 @@ const FULL_RESPONSE_FORMAT = {
         plate: { type: "string" },
         sheetConfidence: { type: "integer", minimum: 0, maximum: 100 },
         plateConfidence: { type: "integer", minimum: 0, maximum: 100 },
+        whAmbiguous: { type: "boolean" },
       },
-      required: ["sheet", "plate", "sheetConfidence", "plateConfidence"],
+      required: ["sheet", "plate", "sheetConfidence", "plateConfidence", "whAmbiguous"],
       additionalProperties: false,
     },
   },
@@ -57,8 +58,9 @@ const PLATE_RESPONSE_FORMAT = {
       properties: {
         plate: { type: "string" },
         plateConfidence: { type: "integer", minimum: 0, maximum: 100 },
+        whAmbiguous: { type: "boolean" },
       },
-      required: ["plate", "plateConfidence"],
+      required: ["plate", "plateConfidence", "whAmbiguous"],
       additionalProperties: false,
     },
   },
@@ -146,6 +148,7 @@ export const appRouter = router({
           plate: fallback.plate,
           sheetConfidence: 100,
           plateConfidence: fallback.plateConfidence,
+          whAmbiguous: fallback.whAmbiguous,
         });
         console.info(`[conference] fallback analysis completed in ${Math.round(performance.now() - startedAt)}ms`);
         return result;

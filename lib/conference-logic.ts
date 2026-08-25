@@ -22,6 +22,7 @@ export type ExtractedSequences = {
   plate?: unknown;
   sheetConfidence?: unknown;
   plateConfidence?: unknown;
+  whAmbiguous?: unknown;
 };
 
 const PLATE_PATTERN = /^[A-Z]{3}\d[A-Z]\d{2}$/;
@@ -75,8 +76,9 @@ export function buildConferenceResult(extraction: ExtractedSequences): Conferenc
   const sheetConfidence = normalizedConfidence(extraction.sheetConfidence, 75);
   const plateConfidence = normalizedConfidence(extraction.plateConfidence, 75);
   const confidence = Math.min(sheetConfidence, plateConfidence);
+  const whAmbiguous = extraction.whAmbiguous === true;
 
-  if (!isValidPlateSequence(sheet) || !isValidPlateSequence(plate)) {
+  if (!isValidPlateSequence(sheet) || !isValidPlateSequence(plate) || whAmbiguous) {
     return {
       status: "inconclusive",
       sheet: isValidPlateSequence(sheet) ? sheet : null,
@@ -84,8 +86,9 @@ export function buildConferenceResult(extraction: ExtractedSequences): Conferenc
       confidence,
       differences: 0,
       characters: unknownCharacters(sheet, plate),
-      message:
-        "Não foi possível concluir a leitura desta foto. Tente novamente com os dois itens enquadrados e bem iluminados.",
+      message: whAmbiguous
+        ? "A leitura encontrou dúvida entre W e H. Fotografe novamente para evitar uma aprovação incorreta."
+        : "Não foi possível concluir a leitura desta foto. Tente novamente com os dois itens enquadrados e bem iluminados.",
     };
   }
 

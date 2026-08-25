@@ -31,6 +31,19 @@ describe("conference sequence logic", () => {
     expect(result.differences).toBe(1);
   });
 
+  it("never considers W and H equivalent", () => {
+    const result = buildConferenceResult({ sheet: "UPW0A08", plate: "UPH0A08", sheetConfidence: 99, plateConfidence: 99, whAmbiguous: false });
+    expect(result.status).toBe("divergent");
+    expect(result.differences).toBe(1);
+    expect(result.characters[2].state).toBe("different");
+  });
+
+  it("blocks approval when the reader reports W/H ambiguity", () => {
+    const result = buildConferenceResult({ sheet: "UPH0A08", plate: "UPH0A08", sheetConfidence: 88, plateConfidence: 88, whAmbiguous: true });
+    expect(result.status).toBe("inconclusive");
+    expect(result.message).toContain("W e H");
+  });
+
   it("identifies each divergent character", () => {
     const result = buildConferenceResult({ sheet: "CLR9A18", plate: "CLR9A81", sheetConfidence: 96, plateConfidence: 95 });
     expect(result.status).toBe("divergent");

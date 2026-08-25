@@ -40,3 +40,7 @@
 - [x] Diagnosticar se a falha está no retorno do modelo, no recorte ou na validação da sequência.
 - [x] Corrigir a extração vazia com base no diagnóstico, preservando o caminho rápido das aprovações.
 - [ ] Retestar os cenários aprovado, divergente e com caractere manuscrito.
+- [x] Corrigir a leitura da folha que está convertendo W em H.
+- [x] Reforçar que W e H são caracteres distintos e nunca equivalentes.
+- [x] Impedir aprovação automática quando a leitura W/H estiver ambígua.
+- [x] Testar UPW versus UPH como divergência obrigatória.
