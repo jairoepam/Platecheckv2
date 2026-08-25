@@ -91,7 +91,7 @@ export default function ProcessingScreen() {
   }, [analysis, pending, router, started]);
 
   useEffect(() => {
-    const interval = setInterval(() => setElapsed((value) => value + 0.1), 100);
+    const interval = setInterval(() => setElapsed((value) => value + 1), 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -155,10 +155,7 @@ export default function ProcessingScreen() {
         ) : (
           <>
             <View style={styles.loadingWrap}>
-              <View style={styles.loadingCircle}>
-                <ActivityIndicator size="large" color="#0056D2" />
-              </View>
-              <Text style={styles.loadingLabel}>Análise em andamento</Text>
+              <Text style={styles.elapsedTime}>{elapsed}s</Text>
             </View>
             <Text style={styles.hint}>A leitura depende da nitidez, iluminação e conexão.</Text>
           </>
@@ -205,18 +202,14 @@ const styles = StyleSheet.create({
   stepText: { color: "#627089", fontSize: 15, fontWeight: "600" },
   stepTextActive: { color: "#142033", fontWeight: "700" },
   footer: { alignItems: "center", paddingBottom: 8 },
-  loadingWrap: { alignItems: "center", flexDirection: "row", gap: 10, justifyContent: "center" },
-  loadingCircle: {
-    alignItems: "center",
-    backgroundColor: "#EAF2FF",
-    borderColor: "#D7E6FF",
-    borderRadius: 24,
-    borderWidth: 1,
-    height: 48,
-    justifyContent: "center",
-    width: 48,
+  loadingWrap: { alignItems: "center", justifyContent: "center", minHeight: 48 },
+  elapsedTime: {
+    color: "#0056D2",
+    fontSize: 24,
+    fontVariant: ["tabular-nums"],
+    fontWeight: "800",
+    letterSpacing: -0.4,
   },
-  loadingLabel: { color: "#0056D2", fontSize: 13, fontWeight: "800", letterSpacing: 0.2 },
   hint: { color: "#8994A8", fontSize: 11, marginTop: 9, textAlign: "center" },
   errorCard: { backgroundColor: "#FFF0EF", borderRadius: 16, padding: 15 },
   errorText: { color: "#A62A2A", fontSize: 13, lineHeight: 19, textAlign: "center" },

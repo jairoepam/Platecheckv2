@@ -58,3 +58,6 @@
 - [x] Remover a contagem de segundos do loading circular.
 - [x] Confirmar que somente o indicador circular permanece visível.
 - [x] Validar que a remoção não altera o processamento.
+- [x] Substituir o loading circular por uma contagem simples de segundos.
+- [x] Atualizar o contador somente uma vez por segundo para reduzir renderizações.
+- [x] Validar que a alteração visual preserva o desempenho da análise.
