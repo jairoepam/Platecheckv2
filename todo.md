@@ -44,3 +44,7 @@
 - [x] Reforçar que W e H são caracteres distintos e nunca equivalentes.
 - [x] Impedir aprovação automática quando a leitura W/H estiver ambígua.
 - [x] Testar UPW versus UPH como divergência obrigatória.
+- [x] Medir a latência adicional da confirmação W/H atual.
+- [x] Reduzir a segunda análise para recortes menores da área suspeita.
+- [x] Reaproveitar a primeira leitura e validar somente o caractere W/H.
+- [x] Confirmar que a otimização mantém UPW versus UPH como divergente.

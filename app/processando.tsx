@@ -13,17 +13,17 @@ import { trpc } from "@/lib/trpc";
 
 const STEPS = ["Localizando as duas regiões", "Lendo as sequências", "Comparando caractere a caractere"];
 
-async function createFocusedCrops(imageUri: string, imageWidth: number, imageHeight: number) {
+async function createFocusedCrops(imageUri: string, imageWidth: number, imageHeight: number, targetWidth = 1200) {
   const splitY = Math.floor(imageHeight * 0.42);
   const [sheetCrop, plateCrop] = await Promise.all([
     ImageManipulator.manipulateAsync(
       imageUri,
-      [{ crop: { originX: 0, originY: 0, width: imageWidth, height: splitY } }, { resize: { width: 1200 } }],
+      [{ crop: { originX: 0, originY: 0, width: imageWidth, height: splitY } }, { resize: { width: targetWidth } }],
       { base64: true, compress: 0.78, format: ImageManipulator.SaveFormat.JPEG },
     ),
     ImageManipulator.manipulateAsync(
       imageUri,
-      [{ crop: { originX: 0, originY: splitY, width: imageWidth, height: imageHeight - splitY } }, { resize: { width: 1200 } }],
+      [{ crop: { originX: 0, originY: splitY, width: imageWidth, height: imageHeight - splitY } }, { resize: { width: targetWidth } }],
       { base64: true, compress: 0.78, format: ImageManipulator.SaveFormat.JPEG },
     ),
   ]);
@@ -40,12 +40,29 @@ export default function ProcessingScreen() {
   const analysis = trpc.conference.analyze.useMutation({
     onSuccess: async (result) => {
       const containsCriticalWh = /[WH]/.test(`${result.sheet ?? ""}${result.plate ?? ""}`);
-      const needsFocusedVerification = result.status === "inconclusive" || (result.status === "approved" && containsCriticalWh);
-      if (!fallbackRequested.current && needsFocusedVerification && pending) {
+      const canVerifyOnlyWh = containsCriticalWh && Boolean(result.sheet && result.plate);
+      const needsWhVerification = canVerifyOnlyWh && (result.status === "approved" || result.status === "inconclusive");
+      const needsFocusedVerification = result.status === "inconclusive" && !needsWhVerification;
+      if (!fallbackRequested.current && (needsWhVerification || needsFocusedVerification) && pending) {
         try {
           fallbackRequested.current = true;
-          const crops = await createFocusedCrops(pending.imageUri, pending.imageWidth, pending.imageHeight);
-          analysis.mutate({ imageBase64: pending.imageBase64, ...crops });
+          const crops = await createFocusedCrops(
+            pending.imageUri,
+            pending.imageWidth,
+            pending.imageHeight,
+            needsWhVerification ? 800 : 1200,
+          );
+          analysis.mutate(
+            needsWhVerification
+              ? {
+                  imageBase64: pending.imageBase64,
+                  ...crops,
+                  knownSheet: result.sheet ?? undefined,
+                  knownPlate: result.plate ?? undefined,
+                  verifyWh: true,
+                }
+              : { imageBase64: pending.imageBase64, ...crops },
+          );
           return;
         } catch {
           // Se os recortes falharem, mantém o resultado inconclusivo original.

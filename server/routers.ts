@@ -12,6 +12,8 @@ const ANALYSIS_SCHEMA = z.object({
   plateCropBase64: z.string().min(100).max(4_000_000).optional(),
   sheetCropBase64: z.string().min(100).max(4_000_000).optional(),
   knownSheet: z.string().min(7).max(7).optional(),
+  knownPlate: z.string().min(7).max(7).optional(),
+  verifyWh: z.boolean().optional(),
 });
 
 const COMMON_RULES = `A sequência segue obrigatoriamente o padrão ABC1D23: letras nas posições 1, 2, 3 e 5; números nas posições 4, 6 e 7. Ignore outros textos, números, códigos e datas. Examine com atenção 1/I, 0/O, 8/B e 5/S e use o tipo esperado na posição. G e C são letras válidas e distintas; nunca trate G e C como iguais. W e H também são letras distintas e nunca equivalentes: W possui traços diagonais formando vales; H possui duas hastes e uma barra horizontal. Leia folha e placa de forma independente e nunca altere uma leitura para fazê-la coincidir com a outra. Se existir qualquer dúvida visual entre W e H em qualquer item, marque whAmbiguous como true. A sequência da folha pode estar preenchida à mão: leia algarismos manuscritos e use o padrão da placa para decidir o melhor caractere. Não deixe um campo vazio apenas por o algarismo ser manuscrito; só devolva vazio se ele realmente não puder ser distinguido.`;
@@ -27,6 +29,8 @@ ${COMMON_RULES} Se não houver leitura suficiente, devolva string vazia e confia
 const FOCUSED_EXTRACTION_PROMPT = `Você é um leitor de conferência visual. Receberá dois recortes da mesma fotografia: um recorte da folha impressa e um recorte da placa Mercosul física. Leia a melhor sequência de 7 caracteres em cada recorte, mesmo quando a folha tiver caracteres manuscritos ou quando houver um caractere propositalmente diferente.
 
 ${COMMON_RULES} Não deixe ambos vazios se houver qualquer sequência legível. Preserve a diferença real entre os itens.`;
+
+const WH_VERIFICATION_PROMPT = `Você receberá dois recortes: primeiro a folha e depois a placa. Verifique somente o caractere indicado, distinguindo W de H. W possui traços diagonais formando vales; H possui duas hastes e uma barra horizontal. Leia cada imagem independentemente. Não tente fazer os caracteres coincidirem. Se algum deles não estiver nítido, marque ambiguous como true.`;
 
 const FULL_RESPONSE_FORMAT = {
   type: "json_schema" as const,
@@ -66,6 +70,24 @@ const PLATE_RESPONSE_FORMAT = {
   },
 };
 
+const WH_RESPONSE_FORMAT = {
+  type: "json_schema" as const,
+  json_schema: {
+    name: "wh_verification",
+    strict: true,
+    schema: {
+      type: "object",
+      properties: {
+        sheetCharacter: { type: "string", enum: ["W", "H"] },
+        plateCharacter: { type: "string", enum: ["W", "H"] },
+        ambiguous: { type: "boolean" },
+      },
+      required: ["sheetCharacter", "plateCharacter", "ambiguous"],
+      additionalProperties: false,
+    },
+  },
+};
+
 function parseModelJson(content: unknown): Record<string, unknown> {
   if (typeof content !== "string" || !content) return {};
   try {
@@ -89,6 +111,11 @@ function logUnusableResponse(label: string, response: Awaited<ReturnType<typeof 
   });
 }
 
+function replaceCharacter(sequence: string, index: number, character: unknown) {
+  const verified = character === "W" || character === "H" ? character : sequence[index];
+  return `${sequence.slice(0, index)}${verified}${sequence.slice(index + 1)}`;
+}
+
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -102,6 +129,45 @@ export const appRouter = router({
   conference: router({
     analyze: publicProcedure.input(ANALYSIS_SCHEMA).mutation(async ({ input }) => {
       const startedAt = performance.now();
+
+      if (
+        input.verifyWh
+        && input.sheetCropBase64
+        && input.plateCropBase64
+        && input.knownSheet
+        && input.knownPlate
+      ) {
+        const whIndex = Array.from(input.knownSheet).findIndex(
+          (character, index) => /[WH]/.test(character) || /[WH]/.test(input.knownPlate?.[index] ?? ""),
+        );
+        const verificationResponse = await invokeLLM({
+          model: "gpt-5-mini",
+          reasoning: { effort: "minimal" },
+          messages: [
+            { role: "system", content: WH_VERIFICATION_PROMPT },
+            {
+              role: "user",
+              content: [
+                { type: "text", text: `Verifique somente a posição ${whIndex + 1}. A leitura inicial foi folha ${input.knownSheet} e placa ${input.knownPlate}.` },
+                { type: "image_url", image_url: { url: `data:image/jpeg;base64,${input.sheetCropBase64}`, detail: "auto" } },
+                { type: "image_url", image_url: { url: `data:image/jpeg;base64,${input.plateCropBase64}`, detail: "auto" } },
+              ],
+            },
+          ],
+          response_format: WH_RESPONSE_FORMAT,
+        });
+        const verification = parseModelJson(verificationResponse.choices[0]?.message.content);
+        if (!Object.keys(verification).length) logUnusableResponse("W/H verification", verificationResponse);
+        const result = buildConferenceResult({
+          sheet: replaceCharacter(input.knownSheet, whIndex, verification.sheetCharacter),
+          plate: replaceCharacter(input.knownPlate, whIndex, verification.plateCharacter),
+          sheetConfidence: 95,
+          plateConfidence: 95,
+          whAmbiguous: verification.ambiguous !== false,
+        });
+        console.info(`[conference] W/H verification completed in ${Math.round(performance.now() - startedAt)}ms`);
+        return result;
+      }
 
       if (input.sheetCropBase64 && input.plateCropBase64) {
         const focusedResponse = await invokeLLM({
