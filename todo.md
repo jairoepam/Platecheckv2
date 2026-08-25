@@ -67,3 +67,6 @@
 - [x] Tornar inconclusiva toda análise com somente folha ou somente placa.
 - [x] Adicionar testes para ausência da folha, ausência da placa e presença dos dois itens.
 - [x] Remover a contagem de segundos e restaurar somente o loading circular discreto.
+- [x] Verificar e remover qualquer contador de segundos ainda presente na tela de processamento.
+- [x] Garantir que somente o loading circular seja exibido durante a análise.
+- [x] Reiniciar a pré-visualização para eliminar uma versão visual armazenada em cache.

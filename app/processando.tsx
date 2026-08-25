@@ -34,7 +34,6 @@ async function createFocusedCrops(imageUri: string, imageWidth: number, imageHei
 export default function ProcessingScreen() {
   const router = useRouter();
   const pending = useMemo(() => getPendingConference(), []);
-  const [elapsed, setElapsed] = useState(0);
   const [started, setStarted] = useState(false);
   const fallbackRequested = useRef(false);
   const analysis = trpc.conference.analyze.useMutation({
@@ -90,11 +89,6 @@ export default function ProcessingScreen() {
     }
   }, [analysis, pending, router, started]);
 
-  useEffect(() => {
-    const interval = setInterval(() => setElapsed((value) => value + 1), 1000);
-    return () => clearInterval(interval);
-  }, []);
-
   return (
     <ScreenContainer className="p-5" edges={["top", "bottom", "left", "right"]}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -119,8 +113,8 @@ export default function ProcessingScreen() {
         ) : null}
         <View style={styles.list}>
           {STEPS.map((step, index) => {
-            const active = Math.min(2, Math.floor(elapsed / 1.7)) === index;
-            const complete = Math.floor(elapsed / 1.7) > index;
+            const active = index === 1;
+            const complete = index === 0;
             return (
               <View key={step} style={styles.stepRow}>
                 <View style={[styles.stepIcon, complete && styles.stepDone, active && styles.stepActive]}>
