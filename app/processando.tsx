@@ -157,6 +157,7 @@ export default function ProcessingScreen() {
             <View style={styles.loadingWrap}>
               <View style={styles.loadingCircle}>
                 <ActivityIndicator size="large" color="#0056D2" />
+                <Text style={styles.loadingSeconds}>{Math.floor(elapsed)}s</Text>
               </View>
               <Text style={styles.loadingLabel}>Análise em andamento</Text>
             </View>
@@ -215,6 +216,13 @@ const styles = StyleSheet.create({
     height: 48,
     justifyContent: "center",
     width: 48,
+  },
+  loadingSeconds: {
+    color: "#142033",
+    fontSize: 11,
+    fontVariant: ["tabular-nums"],
+    fontWeight: "800",
+    position: "absolute",
   },
   loadingLabel: { color: "#0056D2", fontSize: 13, fontWeight: "800", letterSpacing: 0.2 },
   hint: { color: "#8994A8", fontSize: 11, marginTop: 9, textAlign: "center" },

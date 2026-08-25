@@ -52,3 +52,6 @@
 - [x] Integrar a legenda “Foto única capturada” sobre a imagem ampliada.
 - [x] Remover a barra linear e aplicar um loading circular moderno e discreto.
 - [x] Validar que as mudanças visuais não alteram a lógica de análise.
+- [x] Exibir a contagem de segundos no centro do loading circular.
+- [x] Manter o contador discreto e legível durante todo o processamento.
+- [x] Validar que o contador visual não interfere na análise.
