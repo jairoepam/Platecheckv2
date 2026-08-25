@@ -73,3 +73,6 @@
 - [x] Renomear o aplicativo para Plate Check nas telas visíveis.
 - [x] Atualizar o nome Plate Check na configuração do dispositivo.
 - [x] Validar que a mudança de nome não altera o funcionamento.
+- [x] Adicionar uma linha de tempo de resposta abaixo do loading circular.
+- [x] Isolar a atualização do contador para não renderizar novamente foto, etapas ou análise.
+- [x] Validar que o contador em segundos preserva a leitura e o desempenho.

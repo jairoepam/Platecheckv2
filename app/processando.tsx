@@ -13,6 +13,20 @@ import { trpc } from "@/lib/trpc";
 
 const STEPS = ["Localizando as duas regiões", "Lendo as sequências", "Comparando caractere a caractere"];
 
+function ResponseTime() {
+  const startedAt = useRef(Date.now());
+  const [seconds, setSeconds] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSeconds(Math.round(((Date.now() - startedAt.current) / 1000) * 10) / 10);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return <Text style={styles.responseTime}>Tempo de resposta: {seconds.toFixed(1)} segundos</Text>;
+}
+
 async function createFocusedCrops(imageUri: string, imageWidth: number, imageHeight: number, targetWidth = 1200) {
   const splitY = Math.floor(imageHeight * 0.42);
   const [sheetCrop, plateCrop] = await Promise.all([
@@ -152,6 +166,7 @@ export default function ProcessingScreen() {
               <View style={styles.loadingCircle}>
                 <ActivityIndicator size="large" color="#0056D2" />
               </View>
+              <ResponseTime />
             </View>
             <Text style={styles.hint}>A leitura depende da nitidez, iluminação e conexão.</Text>
           </>
@@ -198,7 +213,7 @@ const styles = StyleSheet.create({
   stepText: { color: "#627089", fontSize: 15, fontWeight: "600" },
   stepTextActive: { color: "#142033", fontWeight: "700" },
   footer: { alignItems: "center", paddingBottom: 8 },
-  loadingWrap: { alignItems: "center", justifyContent: "center", minHeight: 48 },
+  loadingWrap: { alignItems: "center", gap: 9, justifyContent: "center", minHeight: 72 },
   loadingCircle: {
     alignItems: "center",
     backgroundColor: "#EAF2FF",
@@ -209,6 +224,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     width: 48,
   },
+  responseTime: { color: "#627089", fontSize: 13, fontVariant: ["tabular-nums"], textAlign: "center" },
   hint: { color: "#8994A8", fontSize: 11, marginTop: 9, textAlign: "center" },
   errorCard: { backgroundColor: "#FFF0EF", borderRadius: 16, padding: 15 },
   errorText: { color: "#A62A2A", fontSize: 13, lineHeight: 19, textAlign: "center" },
