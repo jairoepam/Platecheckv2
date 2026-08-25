@@ -16,23 +16,13 @@ async function prepareImage(uri: string) {
     [{ resize: { width: 1600 } }],
     { base64: true, compress: 0.72, format: ImageManipulator.SaveFormat.JPEG },
   );
-  const plateCrop = await ImageManipulator.manipulateAsync(
-    prepared.uri,
-    [
-      {
-        crop: {
-          originX: 0,
-          originY: Math.floor(prepared.height * 0.42),
-          width: prepared.width,
-          height: prepared.height - Math.floor(prepared.height * 0.42),
-        },
-      },
-      { resize: { width: 1600 } },
-    ],
-    { base64: true, compress: 0.82, format: ImageManipulator.SaveFormat.JPEG },
-  );
-  if (!prepared.base64 || !plateCrop.base64) throw new Error("Não foi possível preparar a imagem para análise.");
-  return { imageUri: prepared.uri, imageBase64: prepared.base64, plateCropBase64: plateCrop.base64 };
+  if (!prepared.base64) throw new Error("Não foi possível preparar a imagem para análise.");
+  return {
+    imageUri: prepared.uri,
+    imageBase64: prepared.base64,
+    imageWidth: prepared.width,
+    imageHeight: prepared.height,
+  };
 }
 
 export default function CaptureScreen() {

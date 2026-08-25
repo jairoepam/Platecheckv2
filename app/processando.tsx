@@ -2,8 +2,9 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import * as Haptics from "expo-haptics";
 import { Stack, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from "react-native";
+import * as ImageManipulator from "expo-image-manipulator";
 
 import { ScreenContainer } from "@/components/screen-container";
 import { saveConferenceResult } from "@/lib/conference-history";
@@ -12,13 +13,44 @@ import { trpc } from "@/lib/trpc";
 
 const STEPS = ["Localizando as duas regiões", "Lendo as sequências", "Comparando caractere a caractere"];
 
+async function createPlateCrop(imageUri: string, imageWidth: number, imageHeight: number) {
+  const plateCrop = await ImageManipulator.manipulateAsync(
+    imageUri,
+    [
+      {
+        crop: {
+          originX: 0,
+          originY: Math.floor(imageHeight * 0.42),
+          width: imageWidth,
+          height: imageHeight - Math.floor(imageHeight * 0.42),
+        },
+      },
+      { resize: { width: 1200 } },
+    ],
+    { base64: true, compress: 0.78, format: ImageManipulator.SaveFormat.JPEG },
+  );
+  if (!plateCrop.base64) throw new Error("Não foi possível preparar o recorte da placa.");
+  return plateCrop.base64;
+}
+
 export default function ProcessingScreen() {
   const router = useRouter();
   const pending = useMemo(() => getPendingConference(), []);
   const [elapsed, setElapsed] = useState(0);
   const [started, setStarted] = useState(false);
+  const fallbackRequested = useRef(false);
   const analysis = trpc.conference.analyze.useMutation({
     onSuccess: async (result) => {
+      if (!fallbackRequested.current && result.status === "inconclusive" && result.sheet && pending) {
+        try {
+          fallbackRequested.current = true;
+          const plateCropBase64 = await createPlateCrop(pending.imageUri, pending.imageWidth, pending.imageHeight);
+          analysis.mutate({ imageBase64: pending.imageBase64, plateCropBase64, knownSheet: result.sheet });
+          return;
+        } catch {
+          // Se o recorte falhar, mantém o resultado inconclusivo original.
+        }
+      }
       setConferenceResult(result);
       await saveConferenceResult(result);
       await Haptics.notificationAsync(
@@ -37,7 +69,7 @@ export default function ProcessingScreen() {
     }
     if (!started) {
       setStarted(true);
-      analysis.mutate({ imageBase64: pending.imageBase64, plateCropBase64: pending.plateCropBase64 });
+      analysis.mutate({ imageBase64: pending.imageBase64 });
     }
   }, [analysis, pending, router, started]);
 
@@ -90,7 +122,10 @@ export default function ProcessingScreen() {
           <View style={styles.errorCard}>
             <Text style={styles.errorText}>A análise não foi concluída. Verifique a conexão e tente novamente.</Text>
             <Pressable
-              onPress={() => pending && analysis.mutate({ imageBase64: pending.imageBase64, plateCropBase64: pending.plateCropBase64 })}
+              onPress={() => {
+                fallbackRequested.current = false;
+                pending && analysis.mutate({ imageBase64: pending.imageBase64 });
+              }}
               style={({ pressed }) => [styles.retryButton, pressed && styles.pressed]}
             >
               <Text style={styles.retryText}>Tentar novamente</Text>

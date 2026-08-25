@@ -21,3 +21,7 @@
 - [x] Classificar como divergente em vermelho quando as duas sequências válidas forem diferentes.
 - [x] Cobrir a leitura de placa divergente e a falha de extração com testes de lógica.
 - [x] Alinhar o estado divergente ao modelo de referência, destacando em vermelho cada posição diferente.
+- [ ] Corrigir o bloqueio da pré-visualização móvel na tela de carregamento.
+- [x] Substituir a configuração de execução que não está disponibilizando o pacote ao visualizador móvel.
+- [x] Otimizar a análise de imagem para aproximar o tempo normal da meta de 7 segundos.
+- [x] Acionar o recorte ampliado da placa apenas quando a leitura inicial estiver incompleta.

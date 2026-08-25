@@ -9,13 +9,31 @@ import { publicProcedure, router } from "./_core/trpc";
 
 const ANALYSIS_SCHEMA = z.object({
   imageBase64: z.string().min(100).max(6_000_000),
-  plateCropBase64: z.string().min(100).max(4_000_000),
+  plateCropBase64: z.string().min(100).max(4_000_000).optional(),
+  knownSheet: z.string().min(7).max(7).optional(),
 });
 
-const EXTRACTION_PROMPT = `Você é um leitor preciso de placas Mercosul brasileiras. Você receberá duas imagens da mesma conferência: a primeira é a fotografia completa, com uma folha impressa do sistema e uma placa Mercosul física; a segunda é um recorte ampliado da metade inferior dessa foto, destinado exclusivamente à leitura da placa física. Leia somente a sequência de 7 caracteres que identifica a placa em cada item.
+const COMMON_RULES = `A sequência segue obrigatoriamente o padrão ABC1D23: letras nas posições 1, 2, 3 e 5; números nas posições 4, 6 e 7. Ignore outros textos, números, códigos e datas. Examine com atenção 1/I, 0/O, 8/B e 5/S e use o tipo esperado na posição. G e C são letras válidas e distintas; nunca trate G e C como iguais. Não invente caracteres.`;
 
-Regras: a sequência segue obrigatoriamente o padrão ABC1D23, isto é, letras nas posições 1, 2, 3 e 5; números nas posições 4, 6 e 7. Ignore outros textos, números, códigos e datas. Examine com atenção os pares visuais 1/I, 0/O, 8/B e 5/S: use o tipo esperado na posição para decidir entre letra e número. G e C são letras válidas e distintas; não as trate como iguais, leia a forma com cuidado. Não invente caracteres; se algo não estiver claramente legível, devolva uma string vazia e confiança baixa. Responda exclusivamente em JSON válido, sem markdown, exatamente neste formato:
+const FULL_EXTRACTION_PROMPT = `Você é um leitor preciso de placas Mercosul brasileiras. Receberá uma única fotografia com uma folha impressa do sistema e uma placa Mercosul física. Leia as duas sequências de 7 caracteres, uma na folha e uma na placa.
+
+${COMMON_RULES} Se não houver leitura suficiente de algum item, devolva string vazia e confiança baixa. Responda exclusivamente em JSON válido, sem markdown:
 {"sheet":"ABC1D23 ou vazio","plate":"ABC1D23 ou vazio","sheetConfidence":0,"plateConfidence":0}`;
+
+const PLATE_FALLBACK_PROMPT = `Você é um leitor preciso de placas Mercosul brasileiras. Receberá um recorte ampliado da metade inferior de uma foto, contendo a placa Mercosul física. Leia somente os 7 caracteres da placa física.
+
+${COMMON_RULES} Se não houver leitura suficiente, devolva string vazia e confiança baixa. Responda exclusivamente em JSON válido, sem markdown:
+{"plate":"ABC1D23 ou vazio","plateConfidence":0}`;
+
+function parseModelJson(content: unknown): Record<string, unknown> {
+  if (typeof content !== "string" || !content) return {};
+  try {
+    const parsed = JSON.parse(content);
+    return parsed && typeof parsed === "object" ? parsed as Record<string, unknown> : {};
+  } catch {
+    return {};
+  }
+}
 
 export const appRouter = router({
   system: systemRouter,
@@ -29,46 +47,48 @@ export const appRouter = router({
   }),
   conference: router({
     analyze: publicProcedure.input(ANALYSIS_SCHEMA).mutation(async ({ input }) => {
-      const response = await invokeLLM({
+      if (input.plateCropBase64 && input.knownSheet) {
+        const fallbackResponse = await invokeLLM({
+          model: "gemini-3-flash-preview",
+          messages: [
+            { role: "system", content: PLATE_FALLBACK_PROMPT },
+            {
+              role: "user",
+              content: [
+                { type: "text", text: `A folha foi lida como ${input.knownSheet}. Leia a placa física neste recorte.` },
+                { type: "image_url", image_url: { url: `data:image/jpeg;base64,${input.plateCropBase64}`, detail: "auto" } },
+              ],
+            },
+          ],
+          response_format: { type: "json_object" },
+        });
+        const fallback = parseModelJson(fallbackResponse.choices[0]?.message.content);
+        return buildConferenceResult({
+          sheet: input.knownSheet,
+          plate: fallback.plate,
+          sheetConfidence: 100,
+          plateConfidence: fallback.plateConfidence,
+        });
+      }
+
+      const fullResponse = await invokeLLM({
         model: "gemini-3-flash-preview",
         messages: [
-          { role: "system", content: EXTRACTION_PROMPT },
+          { role: "system", content: FULL_EXTRACTION_PROMPT },
           {
             role: "user",
             content: [
               { type: "text", text: "Extraia as duas sequências da imagem agora." },
-              {
-                type: "image_url",
-                image_url: {
-                  url: `data:image/jpeg;base64,${input.imageBase64}`,
-                  detail: "auto",
-                },
-              },
-              {
-                type: "image_url",
-                image_url: {
-                  url: `data:image/jpeg;base64,${input.plateCropBase64}`,
-                  detail: "auto",
-                },
-              },
+              { type: "image_url", image_url: { url: `data:image/jpeg;base64,${input.imageBase64}`, detail: "auto" } },
             ],
           },
         ],
         response_format: { type: "json_object" },
       });
-
-      const content = response.choices[0]?.message.content;
-      if (typeof content !== "string" || !content) {
-        return buildConferenceResult({});
-      }
-
-      try {
-        return buildConferenceResult(JSON.parse(content));
-      } catch {
-        return buildConferenceResult({});
-      }
+      return buildConferenceResult(parseModelJson(fullResponse.choices[0]?.message.content));
     }),
   }),
 });
 
 export type AppRouter = typeof appRouter;
+

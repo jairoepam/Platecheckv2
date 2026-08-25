@@ -3,7 +3,8 @@ import type { ConferenceResult } from "@/lib/conference-logic";
 type PendingConference = {
   imageUri: string;
   imageBase64: string;
-  plateCropBase64: string;
+  imageWidth: number;
+  imageHeight: number;
 };
 
 type ConferenceSession = {
