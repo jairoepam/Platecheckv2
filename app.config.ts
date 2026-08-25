@@ -15,7 +15,7 @@ const bundleId =
 const timestamp = bundleId.split(".").pop()?.replace(/^t/, "") ?? "";
 
 const env = {
-  appName: "Conferência Expressa",
+  appName: "Plate Check",
   appSlug: "conferencia-placas",
   logoUrl: "/manus-storage/conferencia-expressa-icon_2ca45fa3.png",
   scheme: `manus${timestamp}`,
@@ -69,13 +69,13 @@ const config: ExpoConfig = {
     [
       "expo-camera",
       {
-        cameraPermission: "Permita que o Conferência Expressa use a câmera para fotografar a folha e a placa.",
+        cameraPermission: "Permita que o Plate Check use a câmera para fotografar a folha e a placa.",
       },
     ],
     [
       "expo-image-picker",
       {
-        photosPermission: "Permita que o Conferência Expressa acesse uma foto para conferir a placa.",
+        photosPermission: "Permita que o Plate Check acesse uma foto para conferir a placa.",
       },
     ],
     [

@@ -26,7 +26,7 @@ export default function HomeScreen() {
           <View style={styles.brandIcon}>
             <MaterialIcons name="verified" size={20} color="#FFFFFF" />
           </View>
-          <Text style={styles.brand}>Conferência Expressa</Text>
+          <Text style={styles.brand}>Plate Check</Text>
           <Pressable
             accessibilityLabel="Abrir histórico"
             onPress={() => router.push("/historico")}

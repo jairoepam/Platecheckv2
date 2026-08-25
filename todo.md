@@ -70,3 +70,6 @@
 - [x] Verificar e remover qualquer contador de segundos ainda presente na tela de processamento.
 - [x] Garantir que somente o loading circular seja exibido durante a análise.
 - [x] Reiniciar a pré-visualização para eliminar uma versão visual armazenada em cache.
+- [x] Renomear o aplicativo para Plate Check nas telas visíveis.
+- [x] Atualizar o nome Plate Check na configuração do dispositivo.
+- [x] Validar que a mudança de nome não altera o funcionamento.
