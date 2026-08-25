@@ -47,9 +47,12 @@ export const appRouter = router({
   }),
   conference: router({
     analyze: publicProcedure.input(ANALYSIS_SCHEMA).mutation(async ({ input }) => {
+      const startedAt = performance.now();
       if (input.plateCropBase64 && input.knownSheet) {
         const fallbackResponse = await invokeLLM({
-          model: "gemini-3-flash-preview",
+          model: "gpt-5-mini",
+          reasoning: { effort: "minimal" },
+          maxTokens: 120,
           messages: [
             { role: "system", content: PLATE_FALLBACK_PROMPT },
             {
@@ -63,16 +66,20 @@ export const appRouter = router({
           response_format: { type: "json_object" },
         });
         const fallback = parseModelJson(fallbackResponse.choices[0]?.message.content);
-        return buildConferenceResult({
+        const result = buildConferenceResult({
           sheet: input.knownSheet,
           plate: fallback.plate,
           sheetConfidence: 100,
           plateConfidence: fallback.plateConfidence,
         });
+        console.info(`[conference] fallback analysis completed in ${Math.round(performance.now() - startedAt)}ms`);
+        return result;
       }
 
       const fullResponse = await invokeLLM({
-        model: "gemini-3-flash-preview",
+        model: "gpt-5-mini",
+        reasoning: { effort: "minimal" },
+        maxTokens: 160,
         messages: [
           { role: "system", content: FULL_EXTRACTION_PROMPT },
           {
@@ -85,10 +92,11 @@ export const appRouter = router({
         ],
         response_format: { type: "json_object" },
       });
-      return buildConferenceResult(parseModelJson(fullResponse.choices[0]?.message.content));
+      const result = buildConferenceResult(parseModelJson(fullResponse.choices[0]?.message.content));
+      console.info(`[conference] full analysis completed in ${Math.round(performance.now() - startedAt)}ms`);
+      return result;
     }),
   }),
 });
 
 export type AppRouter = typeof appRouter;
-

@@ -25,3 +25,5 @@
 - [x] Substituir a configuração de execução que não está disponibilizando o pacote ao visualizador móvel.
 - [x] Otimizar a análise de imagem para aproximar o tempo normal da meta de 7 segundos.
 - [x] Acionar o recorte ampliado da placa apenas quando a leitura inicial estiver incompleta.
+- [x] Reduzir a latência observada de quase 20 segundos no caminho normal de análise.
+- [x] Medir a duração do preparo da imagem e da resposta de visão para validar a meta operacional.

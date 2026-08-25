@@ -13,8 +13,8 @@ import { setPendingConference } from "@/lib/conference-session";
 async function prepareImage(uri: string) {
   const prepared = await ImageManipulator.manipulateAsync(
     uri,
-    [{ resize: { width: 1600 } }],
-    { base64: true, compress: 0.72, format: ImageManipulator.SaveFormat.JPEG },
+    [{ resize: { width: 1280 } }],
+    { base64: true, compress: 0.62, format: ImageManipulator.SaveFormat.JPEG },
   );
   if (!prepared.base64) throw new Error("Não foi possível preparar a imagem para análise.");
   return {
