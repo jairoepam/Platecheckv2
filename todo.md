@@ -48,3 +48,7 @@
 - [x] Reduzir a segunda análise para recortes menores da área suspeita.
 - [x] Reaproveitar a primeira leitura e validar somente o caractere W/H.
 - [x] Confirmar que a otimização mantém UPW versus UPH como divergente.
+- [x] Aumentar a prévia da foto na tela de processamento.
+- [x] Integrar a legenda “Foto única capturada” sobre a imagem ampliada.
+- [x] Remover a barra linear e aplicar um loading circular moderno e discreto.
+- [x] Validar que as mudanças visuais não alteram a lógica de análise.

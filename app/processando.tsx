@@ -108,11 +108,15 @@ export default function ProcessingScreen() {
       <View style={styles.main}>
         <Text style={styles.title}>Conferindo sua foto</Text>
         <Text style={styles.subtitle}>Estamos lendo as duas sequências da mesma imagem.</Text>
-        {pending ? <Image source={{ uri: pending.imageUri }} style={styles.preview} /> : null}
-        <View style={styles.photoCaption}>
-          <MaterialIcons name="lock" size={14} color="#627089" />
-          <Text style={styles.photoCaptionText}>Foto única capturada</Text>
-        </View>
+        {pending ? (
+          <View style={styles.previewWrap}>
+            <Image source={{ uri: pending.imageUri }} style={styles.preview} resizeMode="cover" />
+            <View style={styles.photoCaption}>
+              <MaterialIcons name="lock" size={15} color="#FFFFFF" />
+              <Text style={styles.photoCaptionText}>Foto única capturada</Text>
+            </View>
+          </View>
+        ) : null}
         <View style={styles.list}>
           {STEPS.map((step, index) => {
             const active = Math.min(2, Math.floor(elapsed / 1.7)) === index;
@@ -150,8 +154,11 @@ export default function ProcessingScreen() {
           </View>
         ) : (
           <>
-            <View style={styles.progressTrack}>
-              <View style={[styles.progressFill, { width: `${Math.min(92, 18 + elapsed * 13)}%` }]} />
+            <View style={styles.loadingWrap}>
+              <View style={styles.loadingCircle}>
+                <ActivityIndicator size="large" color="#0056D2" />
+              </View>
+              <Text style={styles.loadingLabel}>Análise em andamento</Text>
             </View>
             <Text style={styles.hint}>A leitura depende da nitidez, iluminação e conexão.</Text>
           </>
@@ -166,12 +173,30 @@ const styles = StyleSheet.create({
   lock: { alignItems: "center", backgroundColor: "#EAF2FF", borderRadius: 12, height: 28, justifyContent: "center", width: 28 },
   secureText: { color: "#0056D2", fontSize: 11, fontWeight: "800", letterSpacing: 0.9 },
   main: { alignItems: "center", flex: 1, justifyContent: "center" },
-  title: { color: "#142033", fontSize: 28, fontWeight: "800", letterSpacing: -0.5, marginTop: 32 },
+  title: { color: "#142033", fontSize: 28, fontWeight: "800", letterSpacing: -0.5, marginTop: 22 },
   subtitle: { color: "#627089", fontSize: 16, lineHeight: 23, marginTop: 8, maxWidth: 290, textAlign: "center" },
-  preview: { borderRadius: 18, height: 184, marginTop: 28, width: 142 },
-  photoCaption: { alignItems: "center", flexDirection: "row", gap: 5, marginTop: 9 },
-  photoCaptionText: { color: "#627089", fontSize: 12, fontWeight: "600" },
-  list: { alignSelf: "stretch", gap: 14, marginTop: 32 },
+  previewWrap: {
+    alignSelf: "stretch",
+    borderRadius: 20,
+    height: 220,
+    marginTop: 22,
+    overflow: "hidden",
+  },
+  preview: { height: "100%", width: "100%" },
+  photoCaption: {
+    alignItems: "center",
+    backgroundColor: "rgba(12, 32, 54, 0.78)",
+    bottom: 0,
+    flexDirection: "row",
+    gap: 7,
+    left: 0,
+    paddingHorizontal: 16,
+    paddingVertical: 11,
+    position: "absolute",
+    right: 0,
+  },
+  photoCaptionText: { color: "#FFFFFF", fontSize: 13, fontWeight: "700" },
+  list: { alignSelf: "stretch", gap: 12, marginTop: 22 },
   stepRow: { alignItems: "center", flexDirection: "row", gap: 12 },
   stepIcon: { alignItems: "center", backgroundColor: "#EDF1F7", borderRadius: 14, height: 28, justifyContent: "center", width: 28 },
   stepDone: { backgroundColor: "#178A4B" },
@@ -179,10 +204,20 @@ const styles = StyleSheet.create({
   stepNumber: { color: "#627089", fontSize: 12, fontWeight: "800" },
   stepText: { color: "#627089", fontSize: 15, fontWeight: "600" },
   stepTextActive: { color: "#142033", fontWeight: "700" },
-  footer: { paddingBottom: 8 },
-  progressTrack: { backgroundColor: "#E4E9F2", borderRadius: 5, height: 6, overflow: "hidden" },
-  progressFill: { backgroundColor: "#0056D2", borderRadius: 5, height: "100%" },
-  hint: { color: "#8994A8", fontSize: 11, marginTop: 11, textAlign: "center" },
+  footer: { alignItems: "center", paddingBottom: 8 },
+  loadingWrap: { alignItems: "center", flexDirection: "row", gap: 10, justifyContent: "center" },
+  loadingCircle: {
+    alignItems: "center",
+    backgroundColor: "#EAF2FF",
+    borderColor: "#D7E6FF",
+    borderRadius: 24,
+    borderWidth: 1,
+    height: 48,
+    justifyContent: "center",
+    width: 48,
+  },
+  loadingLabel: { color: "#0056D2", fontSize: 13, fontWeight: "800", letterSpacing: 0.2 },
+  hint: { color: "#8994A8", fontSize: 11, marginTop: 9, textAlign: "center" },
   errorCard: { backgroundColor: "#FFF0EF", borderRadius: 16, padding: 15 },
   errorText: { color: "#A62A2A", fontSize: 13, lineHeight: 19, textAlign: "center" },
   retryButton: { alignSelf: "center", marginTop: 10, padding: 8 },
