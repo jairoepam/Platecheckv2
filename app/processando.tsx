@@ -98,10 +98,6 @@ export default function ProcessingScreen() {
           </View>
         ) : (
           <>
-            <View style={styles.timeRow}>
-              <Text style={styles.timeLabel}>Tempo de resposta</Text>
-              <Text style={styles.timeValue}>{elapsed.toFixed(1)}s</Text>
-            </View>
             <View style={styles.progressTrack}>
               <View style={[styles.progressFill, { width: `${Math.min(92, 18 + elapsed * 13)}%` }]} />
             </View>
@@ -132,10 +128,7 @@ const styles = StyleSheet.create({
   stepText: { color: "#627089", fontSize: 15, fontWeight: "600" },
   stepTextActive: { color: "#142033", fontWeight: "700" },
   footer: { paddingBottom: 8 },
-  timeRow: { flexDirection: "row", justifyContent: "space-between" },
-  timeLabel: { color: "#627089", fontSize: 13 },
-  timeValue: { color: "#142033", fontSize: 13, fontWeight: "800" },
-  progressTrack: { backgroundColor: "#E4E9F2", borderRadius: 5, height: 8, marginTop: 9, overflow: "hidden" },
+  progressTrack: { backgroundColor: "#E4E9F2", borderRadius: 5, height: 6, overflow: "hidden" },
   progressFill: { backgroundColor: "#0056D2", borderRadius: 5, height: "100%" },
   hint: { color: "#8994A8", fontSize: 11, marginTop: 11, textAlign: "center" },
   errorCard: { backgroundColor: "#FFF0EF", borderRadius: 16, padding: 15 },

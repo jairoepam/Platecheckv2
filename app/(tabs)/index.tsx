@@ -52,7 +52,7 @@ export default function HomeScreen() {
             <View style={styles.paperLineWide} />
             <View style={styles.paperLine} />
             <View style={styles.paperLineShort} />
-            <View style={styles.paperPlate}>ABC1D23</View>
+            <Text style={styles.paperPlate}>ABC1D23</Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.platePreview}>

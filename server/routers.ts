@@ -13,7 +13,7 @@ const ANALYSIS_SCHEMA = z.object({
 
 const EXTRACTION_PROMPT = `Você é um leitor preciso de placas Mercosul brasileiras. Há uma única fotografia com dois itens: uma folha impressa do sistema e uma placa Mercosul física. Leia somente a sequência de 7 caracteres que identifica a placa em cada item.
 
-Regras: a sequência segue o padrão ABC1D23; ignore outros textos, números, códigos e datas; não invente caracteres; se algo não estiver claramente legível, devolva uma string vazia e confiança baixa. Responda exclusivamente em JSON válido, sem markdown, exatamente neste formato:
+Regras: a sequência segue obrigatoriamente o padrão ABC1D23, isto é, letras nas posições 1, 2, 3 e 5; números nas posições 4, 6 e 7. Ignore outros textos, números, códigos e datas. Examine com atenção os pares visuais 1/I, 0/O, 8/B e 5/S: use o tipo esperado na posição para decidir entre letra e número. G e C são letras válidas e distintas; não as trate como iguais, leia a forma com cuidado. Não invente caracteres; se algo não estiver claramente legível, devolva uma string vazia e confiança baixa. Responda exclusivamente em JSON válido, sem markdown, exatamente neste formato:
 {"sheet":"ABC1D23 ou vazio","plate":"ABC1D23 ou vazio","sheetConfidence":0,"plateConfidence":0}`;
 
 export const appRouter = router({
