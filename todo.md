@@ -33,3 +33,7 @@
 - [x] Restaurar a leitura de números manuscritos dentro da sequência da folha.
 - [x] Aproximar a tela de resultado e seus estados do layout do aplicativo de referência.
 - [x] Preservar o tempo atual enquanto a qualidade de leitura é corrigida.
+- [x] Recuperar a identificação das duas sequências no caso divergente, sem alterar as fotos aprovadas.
+- [x] Criar confirmação dedicada da placa quando a folha já tiver sido lida.
+- [x] Validar que a sequência divergente seja exibida no resultado vermelho com a posição diferente.
+

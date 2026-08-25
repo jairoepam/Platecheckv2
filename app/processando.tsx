@@ -13,24 +13,22 @@ import { trpc } from "@/lib/trpc";
 
 const STEPS = ["Localizando as duas regiões", "Lendo as sequências", "Comparando caractere a caractere"];
 
-async function createPlateCrop(imageUri: string, imageWidth: number, imageHeight: number) {
-  const plateCrop = await ImageManipulator.manipulateAsync(
-    imageUri,
-    [
-      {
-        crop: {
-          originX: 0,
-          originY: Math.floor(imageHeight * 0.42),
-          width: imageWidth,
-          height: imageHeight - Math.floor(imageHeight * 0.42),
-        },
-      },
-      { resize: { width: 1200 } },
-    ],
-    { base64: true, compress: 0.78, format: ImageManipulator.SaveFormat.JPEG },
-  );
-  if (!plateCrop.base64) throw new Error("Não foi possível preparar o recorte da placa.");
-  return plateCrop.base64;
+async function createFocusedCrops(imageUri: string, imageWidth: number, imageHeight: number) {
+  const splitY = Math.floor(imageHeight * 0.42);
+  const [sheetCrop, plateCrop] = await Promise.all([
+    ImageManipulator.manipulateAsync(
+      imageUri,
+      [{ crop: { originX: 0, originY: 0, width: imageWidth, height: splitY } }, { resize: { width: 1200 } }],
+      { base64: true, compress: 0.78, format: ImageManipulator.SaveFormat.JPEG },
+    ),
+    ImageManipulator.manipulateAsync(
+      imageUri,
+      [{ crop: { originX: 0, originY: splitY, width: imageWidth, height: imageHeight - splitY } }, { resize: { width: 1200 } }],
+      { base64: true, compress: 0.78, format: ImageManipulator.SaveFormat.JPEG },
+    ),
+  ]);
+  if (!sheetCrop.base64 || !plateCrop.base64) throw new Error("Não foi possível preparar os recortes da conferência.");
+  return { sheetCropBase64: sheetCrop.base64, plateCropBase64: plateCrop.base64 };
 }
 
 export default function ProcessingScreen() {
@@ -41,14 +39,14 @@ export default function ProcessingScreen() {
   const fallbackRequested = useRef(false);
   const analysis = trpc.conference.analyze.useMutation({
     onSuccess: async (result) => {
-      if (!fallbackRequested.current && result.status === "inconclusive" && result.sheet && pending) {
+      if (!fallbackRequested.current && result.status === "inconclusive" && pending) {
         try {
           fallbackRequested.current = true;
-          const plateCropBase64 = await createPlateCrop(pending.imageUri, pending.imageWidth, pending.imageHeight);
-          analysis.mutate({ imageBase64: pending.imageBase64, plateCropBase64, knownSheet: result.sheet });
+          const crops = await createFocusedCrops(pending.imageUri, pending.imageWidth, pending.imageHeight);
+          analysis.mutate({ imageBase64: pending.imageBase64, ...crops });
           return;
         } catch {
-          // Se o recorte falhar, mantém o resultado inconclusivo original.
+          // Se os recortes falharem, mantém o resultado inconclusivo original.
         }
       }
       setConferenceResult(result);

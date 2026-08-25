@@ -10,6 +10,7 @@ import { publicProcedure, router } from "./_core/trpc";
 const ANALYSIS_SCHEMA = z.object({
   imageBase64: z.string().min(100).max(6_000_000),
   plateCropBase64: z.string().min(100).max(4_000_000).optional(),
+  sheetCropBase64: z.string().min(100).max(4_000_000).optional(),
   knownSheet: z.string().min(7).max(7).optional(),
 });
 
@@ -24,6 +25,11 @@ const PLATE_FALLBACK_PROMPT = `Você é um leitor preciso de placas Mercosul bra
 
 ${COMMON_RULES} Se não houver leitura suficiente, devolva string vazia e confiança baixa. Responda exclusivamente em JSON válido, sem markdown:
 {"plate":"ABC1D23 ou vazio","plateConfidence":0}`;
+
+const FOCUSED_EXTRACTION_PROMPT = `Você é um leitor de conferência visual. Receberá dois recortes da mesma fotografia: um recorte da folha impressa e um recorte da placa Mercosul física. Leia a melhor sequência de 7 caracteres em cada recorte, mesmo quando a folha tiver caracteres manuscritos ou quando houver um caractere propositalmente diferente.
+
+${COMMON_RULES} Não responda “não identificada” nem deixe ambos vazios se houver qualquer sequência legível. Preserve a diferença real entre os itens. Responda exclusivamente em JSON válido, sem markdown:
+{"sheet":"ABC1D23 ou vazio","plate":"ABC1D23 ou vazio","sheetConfidence":0,"plateConfidence":0}`;
 
 function parseModelJson(content: unknown): Record<string, unknown> {
   if (typeof content !== "string" || !content) return {};
@@ -52,6 +58,29 @@ export const appRouter = router({
   conference: router({
     analyze: publicProcedure.input(ANALYSIS_SCHEMA).mutation(async ({ input }) => {
       const startedAt = performance.now();
+      if (input.sheetCropBase64 && input.plateCropBase64) {
+        const focusedResponse = await invokeLLM({
+          model: "gemini-3-flash-preview",
+          maxTokens: 768,
+          messages: [
+            { role: "system", content: FOCUSED_EXTRACTION_PROMPT },
+            {
+              role: "user",
+              content: [
+                { type: "text", text: "Leia a sequência da folha neste primeiro recorte e a sequência da placa neste segundo recorte. Compare sem assumir que são iguais." },
+                { type: "image_url", image_url: { url: `data:image/jpeg;base64,${input.sheetCropBase64}`, detail: "auto" } },
+                { type: "image_url", image_url: { url: `data:image/jpeg;base64,${input.plateCropBase64}`, detail: "auto" } },
+              ],
+            },
+          ],
+          response_format: { type: "json_object" },
+        });
+        const focused = parseModelJson(focusedResponse.choices[0]?.message.content);
+        const result = buildConferenceResult(focused);
+        console.info(`[conference] focused analysis completed in ${Math.round(performance.now() - startedAt)}ms`);
+        return result;
+      }
+
       if (input.plateCropBase64 && input.knownSheet) {
         const fallbackResponse = await invokeLLM({
           model: "gemini-3-flash-preview",
