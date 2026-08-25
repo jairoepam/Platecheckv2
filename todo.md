@@ -55,3 +55,6 @@
 - [x] Exibir a contagem de segundos no centro do loading circular.
 - [x] Manter o contador discreto e legível durante todo o processamento.
 - [x] Validar que o contador visual não interfere na análise.
+- [x] Remover a contagem de segundos do loading circular.
+- [x] Confirmar que somente o indicador circular permanece visível.
+- [x] Validar que a remoção não altera o processamento.
