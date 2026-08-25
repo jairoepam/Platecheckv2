@@ -36,4 +36,7 @@
 - [x] Recuperar a identificação das duas sequências no caso divergente, sem alterar as fotos aprovadas.
 - [x] Criar confirmação dedicada da placa quando a folha já tiver sido lida.
 - [x] Validar que a sequência divergente seja exibida no resultado vermelho com a posição diferente.
-
+- [x] Registrar com segurança o caminho executado e a estrutura da resposta do leitor nos casos inconclusivos.
+- [x] Diagnosticar se a falha está no retorno do modelo, no recorte ou na validação da sequência.
+- [x] Corrigir a extração vazia com base no diagnóstico, preservando o caminho rápido das aprovações.
+- [ ] Retestar os cenários aprovado, divergente e com caractere manuscrito.

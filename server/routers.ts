@@ -18,18 +18,51 @@ const COMMON_RULES = `A sequência segue obrigatoriamente o padrão ABC1D23: let
 
 const FULL_EXTRACTION_PROMPT = `Você é um leitor preciso de placas Mercosul brasileiras. Receberá uma única fotografia com uma folha impressa do sistema e uma placa Mercosul física. Leia as duas sequências de 7 caracteres, uma na folha e uma na placa.
 
-${COMMON_RULES} Se não houver leitura suficiente de algum item, devolva string vazia e confiança baixa. Responda exclusivamente em JSON válido, sem markdown:
-{"sheet":"ABC1D23 ou vazio","plate":"ABC1D23 ou vazio","sheetConfidence":0,"plateConfidence":0}`;
+${COMMON_RULES} Se não houver leitura suficiente de algum item, devolva string vazia e confiança baixa.`;
 
 const PLATE_FALLBACK_PROMPT = `Você é um leitor preciso de placas Mercosul brasileiras. Receberá um recorte ampliado da metade inferior de uma foto, contendo a placa Mercosul física. Leia somente os 7 caracteres da placa física.
 
-${COMMON_RULES} Se não houver leitura suficiente, devolva string vazia e confiança baixa. Responda exclusivamente em JSON válido, sem markdown:
-{"plate":"ABC1D23 ou vazio","plateConfidence":0}`;
+${COMMON_RULES} Se não houver leitura suficiente, devolva string vazia e confiança baixa.`;
 
 const FOCUSED_EXTRACTION_PROMPT = `Você é um leitor de conferência visual. Receberá dois recortes da mesma fotografia: um recorte da folha impressa e um recorte da placa Mercosul física. Leia a melhor sequência de 7 caracteres em cada recorte, mesmo quando a folha tiver caracteres manuscritos ou quando houver um caractere propositalmente diferente.
 
-${COMMON_RULES} Não responda “não identificada” nem deixe ambos vazios se houver qualquer sequência legível. Preserve a diferença real entre os itens. Responda exclusivamente em JSON válido, sem markdown:
-{"sheet":"ABC1D23 ou vazio","plate":"ABC1D23 ou vazio","sheetConfidence":0,"plateConfidence":0}`;
+${COMMON_RULES} Não deixe ambos vazios se houver qualquer sequência legível. Preserve a diferença real entre os itens.`;
+
+const FULL_RESPONSE_FORMAT = {
+  type: "json_schema" as const,
+  json_schema: {
+    name: "conference_sequences",
+    strict: true,
+    schema: {
+      type: "object",
+      properties: {
+        sheet: { type: "string" },
+        plate: { type: "string" },
+        sheetConfidence: { type: "integer", minimum: 0, maximum: 100 },
+        plateConfidence: { type: "integer", minimum: 0, maximum: 100 },
+      },
+      required: ["sheet", "plate", "sheetConfidence", "plateConfidence"],
+      additionalProperties: false,
+    },
+  },
+};
+
+const PLATE_RESPONSE_FORMAT = {
+  type: "json_schema" as const,
+  json_schema: {
+    name: "plate_sequence",
+    strict: true,
+    schema: {
+      type: "object",
+      properties: {
+        plate: { type: "string" },
+        plateConfidence: { type: "integer", minimum: 0, maximum: 100 },
+      },
+      required: ["plate", "plateConfidence"],
+      additionalProperties: false,
+    },
+  },
+};
 
 function parseModelJson(content: unknown): Record<string, unknown> {
   if (typeof content !== "string" || !content) return {};
@@ -45,6 +78,15 @@ function parseModelJson(content: unknown): Record<string, unknown> {
   }
 }
 
+function logUnusableResponse(label: string, response: Awaited<ReturnType<typeof invokeLLM>>) {
+  const choice = response.choices[0];
+  console.warn(`[conference] ${label} response did not contain usable JSON`, {
+    finishReason: choice?.finish_reason ?? "unknown",
+    contentType: typeof choice?.message.content,
+    contentLength: typeof choice?.message.content === "string" ? choice.message.content.length : 0,
+  });
+}
+
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -58,24 +100,25 @@ export const appRouter = router({
   conference: router({
     analyze: publicProcedure.input(ANALYSIS_SCHEMA).mutation(async ({ input }) => {
       const startedAt = performance.now();
+
       if (input.sheetCropBase64 && input.plateCropBase64) {
         const focusedResponse = await invokeLLM({
           model: "gemini-3-flash-preview",
-          maxTokens: 768,
           messages: [
             { role: "system", content: FOCUSED_EXTRACTION_PROMPT },
             {
               role: "user",
               content: [
-                { type: "text", text: "Leia a sequência da folha neste primeiro recorte e a sequência da placa neste segundo recorte. Compare sem assumir que são iguais." },
+                { type: "text", text: "Leia a sequência da folha no primeiro recorte e a sequência da placa no segundo. Compare sem assumir que são iguais." },
                 { type: "image_url", image_url: { url: `data:image/jpeg;base64,${input.sheetCropBase64}`, detail: "auto" } },
                 { type: "image_url", image_url: { url: `data:image/jpeg;base64,${input.plateCropBase64}`, detail: "auto" } },
               ],
             },
           ],
-          response_format: { type: "json_object" },
+          response_format: FULL_RESPONSE_FORMAT,
         });
         const focused = parseModelJson(focusedResponse.choices[0]?.message.content);
+        if (!Object.keys(focused).length) logUnusableResponse("focused", focusedResponse);
         const result = buildConferenceResult(focused);
         console.info(`[conference] focused analysis completed in ${Math.round(performance.now() - startedAt)}ms`);
         return result;
@@ -84,7 +127,6 @@ export const appRouter = router({
       if (input.plateCropBase64 && input.knownSheet) {
         const fallbackResponse = await invokeLLM({
           model: "gemini-3-flash-preview",
-          maxTokens: 768,
           messages: [
             { role: "system", content: PLATE_FALLBACK_PROMPT },
             {
@@ -95,9 +137,10 @@ export const appRouter = router({
               ],
             },
           ],
-          response_format: { type: "json_object" },
+          response_format: PLATE_RESPONSE_FORMAT,
         });
         const fallback = parseModelJson(fallbackResponse.choices[0]?.message.content);
+        if (!Object.keys(fallback).length) logUnusableResponse("plate fallback", fallbackResponse);
         const result = buildConferenceResult({
           sheet: input.knownSheet,
           plate: fallback.plate,
@@ -110,7 +153,6 @@ export const appRouter = router({
 
       const fullResponse = await invokeLLM({
         model: "gemini-3-flash-preview",
-        maxTokens: 1024,
         messages: [
           { role: "system", content: FULL_EXTRACTION_PROMPT },
           {
@@ -121,10 +163,10 @@ export const appRouter = router({
             ],
           },
         ],
-        response_format: { type: "json_object" },
+        response_format: FULL_RESPONSE_FORMAT,
       });
       const extracted = parseModelJson(fullResponse.choices[0]?.message.content);
-      if (!Object.keys(extracted).length) console.warn("[conference] vision response did not contain usable JSON");
+      if (!Object.keys(extracted).length) logUnusableResponse("full", fullResponse);
       const result = buildConferenceResult(extracted);
       console.info(`[conference] full analysis completed in ${Math.round(performance.now() - startedAt)}ms`);
       return result;
