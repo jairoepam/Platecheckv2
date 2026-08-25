@@ -27,3 +27,5 @@
 - [x] Acionar o recorte ampliado da placa apenas quando a leitura inicial estiver incompleta.
 - [x] Reduzir a latência observada de quase 20 segundos no caminho normal de análise.
 - [x] Medir a duração do preparo da imagem e da resposta de visão para validar a meta operacional.
+- [x] Recuperar a qualidade de leitura degradada pela redução de resolução e compressão.
+- [x] Ajustar a estratégia de velocidade sem reduzir a confiabilidade dos caracteres lidos.

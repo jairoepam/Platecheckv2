@@ -50,8 +50,7 @@ export const appRouter = router({
       const startedAt = performance.now();
       if (input.plateCropBase64 && input.knownSheet) {
         const fallbackResponse = await invokeLLM({
-          model: "gpt-5-mini",
-          reasoning: { effort: "minimal" },
+          model: "gemini-3-flash-preview",
           maxTokens: 120,
           messages: [
             { role: "system", content: PLATE_FALLBACK_PROMPT },
@@ -77,8 +76,7 @@ export const appRouter = router({
       }
 
       const fullResponse = await invokeLLM({
-        model: "gpt-5-mini",
-        reasoning: { effort: "minimal" },
+        model: "gemini-3-flash-preview",
         maxTokens: 160,
         messages: [
           { role: "system", content: FULL_EXTRACTION_PROMPT },
