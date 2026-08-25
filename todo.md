@@ -17,3 +17,7 @@
 - [x] Tratar equivalências visuais de OCR entre 1/I, 0/O, G/C, 8/B e 5/S com base na posição esperada da placa Mercosul.
 - [x] Tornar a indicação de tempo de análise discreta na tela de processamento.
 - [x] Cobrir os novos cenários de equivalência com testes unitários e validar a compilação.
+- [x] Reforçar a extração da placa Mercosul física com recorte dedicado da fotografia única.
+- [x] Classificar como divergente em vermelho quando as duas sequências válidas forem diferentes.
+- [x] Cobrir a leitura de placa divergente e a falha de extração com testes de lógica.
+- [x] Alinhar o estado divergente ao modelo de referência, destacando em vermelho cada posição diferente.

@@ -109,19 +109,6 @@ export function buildConferenceResult(extraction: ExtractedSequences): Conferenc
     };
   }
 
-  if (confidence < 65) {
-    return {
-      status: "inconclusive",
-      sheet,
-      plate,
-      confidence,
-      differences,
-      characters: unknownCharacters(sheet, plate),
-      message:
-        "A leitura encontrou diferenças, mas a confiança está baixa. Confira a foto e faça uma nova captura se necessário.",
-    };
-  }
-
   return {
     status: "divergent",
     sheet,

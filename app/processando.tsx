@@ -37,7 +37,7 @@ export default function ProcessingScreen() {
     }
     if (!started) {
       setStarted(true);
-      analysis.mutate({ imageBase64: pending.imageBase64 });
+      analysis.mutate({ imageBase64: pending.imageBase64, plateCropBase64: pending.plateCropBase64 });
     }
   }, [analysis, pending, router, started]);
 
@@ -90,7 +90,7 @@ export default function ProcessingScreen() {
           <View style={styles.errorCard}>
             <Text style={styles.errorText}>A análise não foi concluída. Verifique a conexão e tente novamente.</Text>
             <Pressable
-              onPress={() => pending && analysis.mutate({ imageBase64: pending.imageBase64 })}
+              onPress={() => pending && analysis.mutate({ imageBase64: pending.imageBase64, plateCropBase64: pending.plateCropBase64 })}
               style={({ pressed }) => [styles.retryButton, pressed && styles.pressed]}
             >
               <Text style={styles.retryText}>Tentar novamente</Text>

@@ -38,9 +38,9 @@ describe("conference sequence logic", () => {
     expect(result.characters.filter((character) => character.state === "different").map((character) => character.position)).toEqual([6, 7]);
   });
 
-  it("requires a new photo when the sequence is invalid or when a difference has low confidence", () => {
+  it("requires a new photo only when one of the sequences is invalid", () => {
     expect(buildConferenceResult({ sheet: "ABC1D23", plate: "", sheetConfidence: 99, plateConfidence: 0 }).status).toBe("inconclusive");
     expect(buildConferenceResult({ sheet: "ABC1D23", plate: "ABC1D23", sheetConfidence: 64, plateConfidence: 98 }).status).toBe("approved");
-    expect(buildConferenceResult({ sheet: "ABC1D23", plate: "ABC1D24", sheetConfidence: 64, plateConfidence: 98 }).status).toBe("inconclusive");
+    expect(buildConferenceResult({ sheet: "ABC1D23", plate: "ABC1D24", sheetConfidence: 64, plateConfidence: 98 }).status).toBe("divergent");
   });
 });

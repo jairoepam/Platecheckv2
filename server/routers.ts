@@ -9,9 +9,10 @@ import { publicProcedure, router } from "./_core/trpc";
 
 const ANALYSIS_SCHEMA = z.object({
   imageBase64: z.string().min(100).max(6_000_000),
+  plateCropBase64: z.string().min(100).max(4_000_000),
 });
 
-const EXTRACTION_PROMPT = `Você é um leitor preciso de placas Mercosul brasileiras. Há uma única fotografia com dois itens: uma folha impressa do sistema e uma placa Mercosul física. Leia somente a sequência de 7 caracteres que identifica a placa em cada item.
+const EXTRACTION_PROMPT = `Você é um leitor preciso de placas Mercosul brasileiras. Você receberá duas imagens da mesma conferência: a primeira é a fotografia completa, com uma folha impressa do sistema e uma placa Mercosul física; a segunda é um recorte ampliado da metade inferior dessa foto, destinado exclusivamente à leitura da placa física. Leia somente a sequência de 7 caracteres que identifica a placa em cada item.
 
 Regras: a sequência segue obrigatoriamente o padrão ABC1D23, isto é, letras nas posições 1, 2, 3 e 5; números nas posições 4, 6 e 7. Ignore outros textos, números, códigos e datas. Examine com atenção os pares visuais 1/I, 0/O, 8/B e 5/S: use o tipo esperado na posição para decidir entre letra e número. G e C são letras válidas e distintas; não as trate como iguais, leia a forma com cuidado. Não invente caracteres; se algo não estiver claramente legível, devolva uma string vazia e confiança baixa. Responda exclusivamente em JSON válido, sem markdown, exatamente neste formato:
 {"sheet":"ABC1D23 ou vazio","plate":"ABC1D23 ou vazio","sheetConfidence":0,"plateConfidence":0}`;
@@ -40,6 +41,13 @@ export const appRouter = router({
                 type: "image_url",
                 image_url: {
                   url: `data:image/jpeg;base64,${input.imageBase64}`,
+                  detail: "auto",
+                },
+              },
+              {
+                type: "image_url",
+                image_url: {
+                  url: `data:image/jpeg;base64,${input.plateCropBase64}`,
                   detail: "auto",
                 },
               },
