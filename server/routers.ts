@@ -16,7 +16,7 @@ const ANALYSIS_SCHEMA = z.object({
   verifyWh: z.boolean().optional(),
 });
 
-const COMMON_RULES = `A sequência segue obrigatoriamente o padrão ABC1D23: letras nas posições 1, 2, 3 e 5; números nas posições 4, 6 e 7. Ignore outros textos, números, códigos e datas. Examine com atenção 1/I, 0/O, 8/B e 5/S e use o tipo esperado na posição. G e C são letras válidas e distintas; nunca trate G e C como iguais. W e H também são letras distintas e nunca equivalentes: W possui traços diagonais formando vales; H possui duas hastes e uma barra horizontal. Leia folha e placa de forma independente e nunca altere uma leitura para fazê-la coincidir com a outra. Se existir qualquer dúvida visual entre W e H em qualquer item, marque whAmbiguous como true. A sequência da folha pode estar preenchida à mão: leia algarismos manuscritos e use o padrão da placa para decidir o melhor caractere. Não deixe um campo vazio apenas por o algarismo ser manuscrito; só devolva vazio se ele realmente não puder ser distinguido.`;
+const COMMON_RULES = `Antes de ler, confirme dois objetos físicos diferentes na mesma foto: (1) uma folha/documento do sistema, com contexto de papel e outros campos ou textos; e (2) uma placa Mercosul física, com formato de placa, faixa azul e caracteres grandes. Marque sheetVisible como true somente quando a folha real estiver visível. Marque plateVisible como true somente quando a placa física real estiver visível. Marque distinctItems como true somente quando forem claramente dois objetos diferentes. Nunca copie, repita ou deduza a sequência de um item para preencher o outro. Se houver apenas folha, plateVisible deve ser false e plate deve ficar vazio. Se houver apenas placa, sheetVisible deve ser false e sheet deve ficar vazio. A sequência segue obrigatoriamente o padrão ABC1D23: letras nas posições 1, 2, 3 e 5; números nas posições 4, 6 e 7. Ignore outros textos, números, códigos e datas. Examine com atenção 1/I, 0/O, 8/B e 5/S e use o tipo esperado na posição. G e C são letras válidas e distintas; nunca trate G e C como iguais. W e H também são letras distintas e nunca equivalentes: W possui traços diagonais formando vales; H possui duas hastes e uma barra horizontal. Leia folha e placa de forma independente e nunca altere uma leitura para fazê-la coincidir com a outra. Se existir qualquer dúvida visual entre W e H em qualquer item, marque whAmbiguous como true. A sequência da folha pode estar preenchida à mão: leia algarismos manuscritos e use o padrão da placa para decidir o melhor caractere. Não deixe um campo vazio apenas por o algarismo ser manuscrito; só devolva vazio se ele realmente não puder ser distinguido.`;
 
 const FULL_EXTRACTION_PROMPT = `Você é um leitor preciso de placas Mercosul brasileiras. Receberá uma única fotografia com uma folha impressa do sistema e uma placa Mercosul física. Leia as duas sequências de 7 caracteres, uma na folha e uma na placa.
 
@@ -30,7 +30,7 @@ const FOCUSED_EXTRACTION_PROMPT = `Você é um leitor de conferência visual. Re
 
 ${COMMON_RULES} Não deixe ambos vazios se houver qualquer sequência legível. Preserve a diferença real entre os itens.`;
 
-const WH_VERIFICATION_PROMPT = `Você receberá dois recortes: primeiro a folha e depois a placa. Verifique somente o caractere indicado, distinguindo W de H. W possui traços diagonais formando vales; H possui duas hastes e uma barra horizontal. Leia cada imagem independentemente. Não tente fazer os caracteres coincidirem. Se algum deles não estiver nítido, marque ambiguous como true.`;
+const WH_VERIFICATION_PROMPT = `Você receberá dois recortes: primeiro a folha e depois a placa. Antes de ler, confirme que o primeiro contém uma folha/documento real e o segundo contém uma placa física real; marque sheetVisible, plateVisible e distinctItems. Verifique somente o caractere indicado, distinguindo W de H. W possui traços diagonais formando vales; H possui duas hastes e uma barra horizontal. Leia cada imagem independentemente. Não tente fazer os caracteres coincidirem. Se algum deles não estiver nítido, marque ambiguous como true.`;
 
 const FULL_RESPONSE_FORMAT = {
   type: "json_schema" as const,
@@ -45,8 +45,11 @@ const FULL_RESPONSE_FORMAT = {
         sheetConfidence: { type: "integer", minimum: 0, maximum: 100 },
         plateConfidence: { type: "integer", minimum: 0, maximum: 100 },
         whAmbiguous: { type: "boolean" },
+        sheetVisible: { type: "boolean" },
+        plateVisible: { type: "boolean" },
+        distinctItems: { type: "boolean" },
       },
-      required: ["sheet", "plate", "sheetConfidence", "plateConfidence", "whAmbiguous"],
+      required: ["sheet", "plate", "sheetConfidence", "plateConfidence", "whAmbiguous", "sheetVisible", "plateVisible", "distinctItems"],
       additionalProperties: false,
     },
   },
@@ -63,8 +66,9 @@ const PLATE_RESPONSE_FORMAT = {
         plate: { type: "string" },
         plateConfidence: { type: "integer", minimum: 0, maximum: 100 },
         whAmbiguous: { type: "boolean" },
+        plateVisible: { type: "boolean" },
       },
-      required: ["plate", "plateConfidence", "whAmbiguous"],
+      required: ["plate", "plateConfidence", "whAmbiguous", "plateVisible"],
       additionalProperties: false,
     },
   },
@@ -81,8 +85,11 @@ const WH_RESPONSE_FORMAT = {
         sheetCharacter: { type: "string", enum: ["W", "H"] },
         plateCharacter: { type: "string", enum: ["W", "H"] },
         ambiguous: { type: "boolean" },
+        sheetVisible: { type: "boolean" },
+        plateVisible: { type: "boolean" },
+        distinctItems: { type: "boolean" },
       },
-      required: ["sheetCharacter", "plateCharacter", "ambiguous"],
+      required: ["sheetCharacter", "plateCharacter", "ambiguous", "sheetVisible", "plateVisible", "distinctItems"],
       additionalProperties: false,
     },
   },
@@ -164,6 +171,9 @@ export const appRouter = router({
           sheetConfidence: 95,
           plateConfidence: 95,
           whAmbiguous: verification.ambiguous !== false,
+          sheetVisible: verification.sheetVisible,
+          plateVisible: verification.plateVisible,
+          distinctItems: verification.distinctItems,
         });
         console.info(`[conference] W/H verification completed in ${Math.round(performance.now() - startedAt)}ms`);
         return result;
@@ -215,6 +225,9 @@ export const appRouter = router({
           sheetConfidence: 100,
           plateConfidence: fallback.plateConfidence,
           whAmbiguous: fallback.whAmbiguous,
+          sheetVisible: true,
+          plateVisible: fallback.plateVisible,
+          distinctItems: fallback.plateVisible,
         });
         console.info(`[conference] fallback analysis completed in ${Math.round(performance.now() - startedAt)}ms`);
         return result;

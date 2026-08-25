@@ -23,6 +23,9 @@ export type ExtractedSequences = {
   sheetConfidence?: unknown;
   plateConfidence?: unknown;
   whAmbiguous?: unknown;
+  sheetVisible?: unknown;
+  plateVisible?: unknown;
+  distinctItems?: unknown;
 };
 
 const PLATE_PATTERN = /^[A-Z]{3}\d[A-Z]\d{2}$/;
@@ -77,18 +80,31 @@ export function buildConferenceResult(extraction: ExtractedSequences): Conferenc
   const plateConfidence = normalizedConfidence(extraction.plateConfidence, 75);
   const confidence = Math.min(sheetConfidence, plateConfidence);
   const whAmbiguous = extraction.whAmbiguous === true;
+  const sheetVisible = extraction.sheetVisible === true;
+  const plateVisible = extraction.plateVisible === true;
+  const distinctItems = extraction.distinctItems === true;
+  const bothItemsConfirmed = sheetVisible && plateVisible && distinctItems;
 
-  if (!isValidPlateSequence(sheet) || !isValidPlateSequence(plate) || whAmbiguous) {
+  if (!bothItemsConfirmed || !isValidPlateSequence(sheet) || !isValidPlateSequence(plate) || whAmbiguous) {
+    const missingItemMessage = !sheetVisible && !plateVisible
+      ? "A folha impressa e a placa física precisam aparecer juntas na mesma foto."
+      : !sheetVisible
+        ? "A folha impressa não foi identificada. Fotografe novamente com a folha e a placa juntas."
+        : !plateVisible
+          ? "A placa física não foi identificada. Fotografe novamente com a folha e a placa juntas."
+          : !distinctItems
+            ? "Não foi possível confirmar dois itens diferentes. Fotografe a folha e a placa juntas, sem sobreposição."
+            : "Não foi possível concluir a leitura desta foto. Tente novamente com os dois itens enquadrados e bem iluminados.";
     return {
       status: "inconclusive",
-      sheet: isValidPlateSequence(sheet) ? sheet : null,
-      plate: isValidPlateSequence(plate) ? plate : null,
+      sheet: sheetVisible && isValidPlateSequence(sheet) ? sheet : null,
+      plate: plateVisible && isValidPlateSequence(plate) ? plate : null,
       confidence,
       differences: 0,
-      characters: unknownCharacters(sheet, plate),
+      characters: unknownCharacters(sheetVisible ? sheet : "", plateVisible ? plate : ""),
       message: whAmbiguous
         ? "A leitura encontrou dúvida entre W e H. Fotografe novamente para evitar uma aprovação incorreta."
-        : "Não foi possível concluir a leitura desta foto. Tente novamente com os dois itens enquadrados e bem iluminados.",
+        : missingItemMessage,
     };
   }
 

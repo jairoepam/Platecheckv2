@@ -61,3 +61,9 @@
 - [x] Substituir o loading circular por uma contagem simples de segundos.
 - [x] Atualizar o contador somente uma vez por segundo para reduzir renderizações.
 - [x] Validar que a alteração visual preserva o desempenho da análise.
+- [x] Exigir confirmação de que a folha impressa está visível na foto.
+- [x] Exigir confirmação de que a placa física está visível na mesma foto.
+- [x] Impedir que uma única sequência seja duplicada como folha e placa.
+- [x] Tornar inconclusiva toda análise com somente folha ou somente placa.
+- [x] Adicionar testes para ausência da folha, ausência da placa e presença dos dois itens.
+- [x] Remover a contagem de segundos e restaurar somente o loading circular discreto.
