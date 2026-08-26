@@ -163,6 +163,9 @@ export default function ProcessingScreen() {
         ) : (
           <>
             <View style={styles.loadingWrap}>
+              <View style={styles.loadingCircle}>
+                <ActivityIndicator size="large" color="#0056D2" />
+              </View>
               <ResponseTime />
             </View>
             <Text style={styles.hint}>A leitura depende da nitidez, iluminação e conexão.</Text>
@@ -210,7 +213,17 @@ const styles = StyleSheet.create({
   stepText: { color: "#627089", fontSize: 15, fontWeight: "600" },
   stepTextActive: { color: "#142033", fontWeight: "700" },
   footer: { alignItems: "center", paddingBottom: 8 },
-  loadingWrap: { alignItems: "center", justifyContent: "center", minHeight: 24 },
+  loadingWrap: { alignItems: "center", gap: 9, justifyContent: "center", minHeight: 72 },
+  loadingCircle: {
+    alignItems: "center",
+    backgroundColor: "#EAF2FF",
+    borderColor: "#D7E6FF",
+    borderRadius: 24,
+    borderWidth: 1,
+    height: 48,
+    justifyContent: "center",
+    width: 48,
+  },
   responseTime: { color: "#627089", fontSize: 13, fontVariant: ["tabular-nums"], textAlign: "center" },
   hint: { color: "#8994A8", fontSize: 11, marginTop: 9, textAlign: "center" },
   errorCard: { backgroundColor: "#FFF0EF", borderRadius: 16, padding: 15 },

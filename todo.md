@@ -76,6 +76,3 @@
 - [x] Adicionar uma linha de tempo de resposta abaixo do loading circular.
 - [x] Isolar a atualização do contador para não renderizar novamente foto, etapas ou análise.
 - [x] Validar que o contador em segundos preserva a leitura e o desempenho.
-- [x] Remover o loading circular da tela de processamento.
-- [x] Manter somente o tempo de resposta discreto no rodapé.
-- [x] Validar que a simplificação visual não altera a análise.
