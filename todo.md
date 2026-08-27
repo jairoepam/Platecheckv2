@@ -76,6 +76,10 @@
 - [x] Adicionar uma linha de tempo de resposta abaixo do loading circular.
 - [x] Isolar a atualização do contador para não renderizar novamente foto, etapas ou análise.
 - [x] Validar que o contador em segundos preserva a leitura e o desempenho.
+- [x] Verificar a URL de backend usada pela versão compilada externamente.
+- [x] Criar perfis EAS para APK Android, IPA iOS e publicação em lojas.
+- [x] Documentar a instalação do EAS CLI, login, configuração e comandos de compilação.
+- [x] Validar a configuração EAS sem iniciar uma compilação externa.
 - [x] Remover o loading circular da tela de processamento.
 - [x] Manter somente o tempo de resposta discreto no rodapé.
 - [x] Validar que a simplificação visual não altera a análise.
