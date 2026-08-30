@@ -82,3 +82,4 @@
 - [x] Confirmar a URL e a ramificação do repositório GitHub existente.
 - [x] Preparar o commit da versão atual do Plate Check para o GitHub.
 - [x] Enviar o commit ao repositório após confirmação explícita do destino.
+- [x] Criar pull request de manus/plate-check-current para main no GitHub.
