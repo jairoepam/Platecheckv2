@@ -79,3 +79,6 @@
 - [x] Remover o loading circular da tela de processamento.
 - [x] Manter somente o tempo de resposta discreto no rodapé.
 - [x] Validar que a simplificação visual não altera a análise.
+- [x] Confirmar a URL e a ramificação do repositório GitHub existente.
+- [x] Preparar o commit da versão atual do Plate Check para o GitHub.
+- [x] Enviar o commit ao repositório após confirmação explícita do destino.
