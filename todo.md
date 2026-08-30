@@ -1,0 +1,84 @@
+# Project TODO
+
+- [x] Aplicar a identidade visual do Conferência Expressa, incluindo tema e navegação.
+- [x] Implementar tela inicial com instrução de foto única e acesso ao histórico.
+- [x] Implementar captura pela câmera com guia para folha impressa e placa Mercosul na mesma imagem.
+- [x] Permitir selecionar uma foto da galeria como alternativa à captura ao vivo.
+- [x] Criar endpoint seguro para receber a fotografia e extrair as duas sequências por IA.
+- [x] Comparar as sequências caractere a caractere e classificar o resultado como aprovado, divergente ou inconclusivo.
+- [x] Implementar tela de processamento com progresso, temporizador e feedback compreensível.
+- [x] Implementar telas de resultado com evidência visual das posições comparadas.
+- [x] Persistir o histórico de conferências somente no dispositivo.
+- [x] Implementar tela de histórico com contadores e limpeza local.
+- [x] Gerar e aplicar ícone próprio do aplicativo nas configurações obrigatórias.
+- [x] Escrever testes unitários para a comparação das sequências e a classificação do resultado.
+- [x] Validar tipagem, testes e fluxos com dados determinísticos antes da entrega.
+- [x] Corrigir a decisão para aprovar sequências equivalentes lidas na folha e na placa.
+- [x] Tratar equivalências visuais de OCR entre 1/I, 0/O, G/C, 8/B e 5/S com base na posição esperada da placa Mercosul.
+- [x] Tornar a indicação de tempo de análise discreta na tela de processamento.
+- [x] Cobrir os novos cenários de equivalência com testes unitários e validar a compilação.
+- [x] Reforçar a extração da placa Mercosul física com recorte dedicado da fotografia única.
+- [x] Classificar como divergente em vermelho quando as duas sequências válidas forem diferentes.
+- [x] Cobrir a leitura de placa divergente e a falha de extração com testes de lógica.
+- [x] Alinhar o estado divergente ao modelo de referência, destacando em vermelho cada posição diferente.
+- [ ] Corrigir o bloqueio da pré-visualização móvel na tela de carregamento.
+- [x] Substituir a configuração de execução que não está disponibilizando o pacote ao visualizador móvel.
+- [x] Otimizar a análise de imagem para aproximar o tempo normal da meta de 7 segundos.
+- [x] Acionar o recorte ampliado da placa apenas quando a leitura inicial estiver incompleta.
+- [x] Reduzir a latência observada de quase 20 segundos no caminho normal de análise.
+- [x] Medir a duração do preparo da imagem e da resposta de visão para validar a meta operacional.
+- [x] Recuperar a qualidade de leitura degradada pela redução de resolução e compressão.
+- [x] Ajustar a estratégia de velocidade sem reduzir a confiabilidade dos caracteres lidos.
+- [x] Corrigir a extração que está retornando folha e placa como “Não identificada”.
+- [x] Restaurar a leitura de números manuscritos dentro da sequência da folha.
+- [x] Aproximar a tela de resultado e seus estados do layout do aplicativo de referência.
+- [x] Preservar o tempo atual enquanto a qualidade de leitura é corrigida.
+- [x] Recuperar a identificação das duas sequências no caso divergente, sem alterar as fotos aprovadas.
+- [x] Criar confirmação dedicada da placa quando a folha já tiver sido lida.
+- [x] Validar que a sequência divergente seja exibida no resultado vermelho com a posição diferente.
+- [x] Registrar com segurança o caminho executado e a estrutura da resposta do leitor nos casos inconclusivos.
+- [x] Diagnosticar se a falha está no retorno do modelo, no recorte ou na validação da sequência.
+- [x] Corrigir a extração vazia com base no diagnóstico, preservando o caminho rápido das aprovações.
+- [ ] Retestar os cenários aprovado, divergente e com caractere manuscrito.
+- [x] Corrigir a leitura da folha que está convertendo W em H.
+- [x] Reforçar que W e H são caracteres distintos e nunca equivalentes.
+- [x] Impedir aprovação automática quando a leitura W/H estiver ambígua.
+- [x] Testar UPW versus UPH como divergência obrigatória.
+- [x] Medir a latência adicional da confirmação W/H atual.
+- [x] Reduzir a segunda análise para recortes menores da área suspeita.
+- [x] Reaproveitar a primeira leitura e validar somente o caractere W/H.
+- [x] Confirmar que a otimização mantém UPW versus UPH como divergente.
+- [x] Aumentar a prévia da foto na tela de processamento.
+- [x] Integrar a legenda “Foto única capturada” sobre a imagem ampliada.
+- [x] Remover a barra linear e aplicar um loading circular moderno e discreto.
+- [x] Validar que as mudanças visuais não alteram a lógica de análise.
+- [x] Exibir a contagem de segundos no centro do loading circular.
+- [x] Manter o contador discreto e legível durante todo o processamento.
+- [x] Validar que o contador visual não interfere na análise.
+- [x] Remover a contagem de segundos do loading circular.
+- [x] Confirmar que somente o indicador circular permanece visível.
+- [x] Validar que a remoção não altera o processamento.
+- [x] Substituir o loading circular por uma contagem simples de segundos.
+- [x] Atualizar o contador somente uma vez por segundo para reduzir renderizações.
+- [x] Validar que a alteração visual preserva o desempenho da análise.
+- [x] Exigir confirmação de que a folha impressa está visível na foto.
+- [x] Exigir confirmação de que a placa física está visível na mesma foto.
+- [x] Impedir que uma única sequência seja duplicada como folha e placa.
+- [x] Tornar inconclusiva toda análise com somente folha ou somente placa.
+- [x] Adicionar testes para ausência da folha, ausência da placa e presença dos dois itens.
+- [x] Remover a contagem de segundos e restaurar somente o loading circular discreto.
+- [x] Verificar e remover qualquer contador de segundos ainda presente na tela de processamento.
+- [x] Garantir que somente o loading circular seja exibido durante a análise.
+- [x] Reiniciar a pré-visualização para eliminar uma versão visual armazenada em cache.
+- [x] Renomear o aplicativo para Plate Check nas telas visíveis.
+- [x] Atualizar o nome Plate Check na configuração do dispositivo.
+- [x] Validar que a mudança de nome não altera o funcionamento.
+- [x] Adicionar uma linha de tempo de resposta abaixo do loading circular.
+- [x] Isolar a atualização do contador para não renderizar novamente foto, etapas ou análise.
+- [x] Validar que o contador em segundos preserva a leitura e o desempenho.
+- [x] Remover o loading circular da tela de processamento.
+- [x] Manter somente o tempo de resposta discreto no rodapé.
+- [x] Validar que a simplificação visual não altera a análise.
+- [ ] Confirmar a URL e a ramificação do repositório GitHub existente.
+- [ ] Preparar o commit da versão atual do Plate Check para o GitHub.
+- [ ] Enviar o commit ao repositório após confirmação explícita do destino.
