@@ -1,5 +1,5 @@
 {
-  "name": "app-template",
+  "name": "plate-check",
   "version": "1.0.0",
   "private": true,
   "main": "expo-router/entry",
@@ -14,9 +14,11 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "db:push": "drizzle-kit generate && drizzle-kit migrate",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "qr": "node scripts/generate_qr.mjs"
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "qr": "node scripts/generate_qr.mjs",
+    "build:apk": "npx eas-cli build --platform android --profile preview",
+    "build:production": "npx eas-cli build --platform android --profile production"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
