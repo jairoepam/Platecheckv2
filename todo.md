@@ -84,3 +84,5 @@
 - [x] Enviar o commit ao repositório após confirmação explícita do destino.
 - [x] Criar pull request de manus/plate-check-current para main no GitHub.
 - [x] Mesclar o pull request #1 na ramificação main do repositório GitHub.
+- [x] Corrigir a URL de produção do backend usada pelo APK instalado para realizar a análise de fotos.
+- [x] Validar a comunicação do APK com o endpoint publicado antes de gerar uma nova compilação.

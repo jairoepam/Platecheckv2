@@ -1,4 +1,5 @@
 import * as Linking from "expo-linking";
+import Constants from "expo-constants";
 import * as ReactNative from "react-native";
 
 // Extract scheme from bundle ID (last segment timestamp, prefixed with "manus")
@@ -6,6 +7,7 @@ import * as ReactNative from "react-native";
 const bundleId = "com.app.conferenciaplacas";
 const timestamp = bundleId.split(".").pop()?.replace(/^t/, "") ?? "";
 const schemeFromBundleId = `manus${timestamp}`;
+const configuredApiBaseUrl = Constants.expoConfig?.extra?.apiBaseUrl;
 
 const env = {
   portal: process.env.EXPO_PUBLIC_OAUTH_PORTAL_URL ?? "",
@@ -13,7 +15,12 @@ const env = {
   appId: process.env.EXPO_PUBLIC_APP_ID ?? "",
   ownerId: process.env.EXPO_PUBLIC_OWNER_OPEN_ID ?? "",
   ownerName: process.env.EXPO_PUBLIC_OWNER_NAME ?? "",
-  apiBaseUrl: process.env.EXPO_PUBLIC_API_BASE_URL ?? "",
+  // No binário nativo, a configuração Expo é a fonte de verdade. Isso evita
+  // incorporar acidentalmente uma URL temporária usada no desenvolvimento.
+  apiBaseUrl:
+    (typeof configuredApiBaseUrl === "string" ? configuredApiBaseUrl : "")
+    || process.env.EXPO_PUBLIC_API_BASE_URL
+    || "",
   deepLinkScheme: schemeFromBundleId,
 };
 
