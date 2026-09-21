@@ -40,6 +40,13 @@ describe("conference sequence logic", () => {
     expect(result.characters[2].state).toBe("different");
   });
 
+  it("approves identical sequences with W after an unambiguous confirmation", () => {
+    const result = buildConferenceResult({ ...bothItems, sheet: "DWV5B70", plate: "DWV5B70", sheetConfidence: 95, plateConfidence: 95, whAmbiguous: false });
+
+    expect(result.status).toBe("approved");
+    expect(result.characters[1]).toMatchObject({ sheet: "W", plate: "W", state: "match" });
+  });
+
   it("blocks approval when the reader reports W/H ambiguity", () => {
     const result = buildConferenceResult({ ...bothItems, sheet: "UPH0A08", plate: "UPH0A08", sheetConfidence: 88, plateConfidence: 88, whAmbiguous: true });
     expect(result.status).toBe("inconclusive");

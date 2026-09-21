@@ -30,7 +30,7 @@ const FOCUSED_EXTRACTION_PROMPT = `Você é um leitor de conferência visual. Re
 
 ${COMMON_RULES} Não deixe ambos vazios se houver qualquer sequência legível. Preserve a diferença real entre os itens.`;
 
-const WH_VERIFICATION_PROMPT = `Você receberá dois recortes: primeiro a folha e depois a placa. Antes de ler, confirme que o primeiro contém uma folha/documento real e o segundo contém uma placa física real; marque sheetVisible, plateVisible e distinctItems. Verifique somente o caractere indicado, distinguindo W de H. W possui traços diagonais formando vales; H possui duas hastes e uma barra horizontal. Leia cada imagem independentemente. Não tente fazer os caracteres coincidirem. Se algum deles não estiver nítido, marque ambiguous como true.`;
+const WH_VERIFICATION_PROMPT = `Você receberá dois recortes de objetos que já foram confirmados em uma única foto: primeiro a folha impressa e depois a placa Mercosul física. Verifique somente as posições indicadas, distinguindo W de H. W possui traços diagonais formando vales; H possui duas hastes e uma barra horizontal. Leia os dois recortes independentemente e não tente fazer os caracteres coincidirem. Retorne exatamente uma entrada para cada posição indicada. Se algum caractere não estiver nítido, marque ambiguous como true.`;
 
 const FULL_RESPONSE_FORMAT = {
   type: "json_schema" as const,
@@ -97,11 +97,8 @@ const WH_RESPONSE_FORMAT = {
           },
         },
         ambiguous: { type: "boolean" },
-        sheetVisible: { type: "boolean" },
-        plateVisible: { type: "boolean" },
-        distinctItems: { type: "boolean" },
       },
-      required: ["positions", "ambiguous", "sheetVisible", "plateVisible", "distinctItems"],
+      required: ["positions", "ambiguous"],
       additionalProperties: false,
     },
   },
@@ -207,9 +204,9 @@ export const appRouter = router({
           sheetConfidence: 95,
           plateConfidence: 95,
           whAmbiguous: verification.ambiguous !== false || !everyPositionConfirmed,
-          sheetVisible: verification.sheetVisible,
-          plateVisible: verification.plateVisible,
-          distinctItems: verification.distinctItems,
+          sheetVisible: true,
+          plateVisible: true,
+          distinctItems: true,
         });
         console.info(`[conference] W/H verification completed in ${Math.round(performance.now() - startedAt)}ms`);
         return result;

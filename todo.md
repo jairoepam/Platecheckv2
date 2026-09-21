@@ -113,3 +113,13 @@
 - [x] Mostrar o caractere W/H lido na grade mesmo quando a confirmação extra não concluir.
 - [x] Manter a posição como não confirmada e preservar Revisão necessária.
 - [x] Atualizar o teste do fallback e validar TypeScript, testes e lint.
+
+
+## Diagnóstico da confirmação W/H na prévia — 2026-09-21
+
+- [x] Confirmar que o teste no Manus estava usando o backend publicado, não o backend de desenvolvimento atual.
+- [x] Fazer a prévia Web usar o backend de desenvolvimento sem alterar a URL embutida no APK.
+- [x] Simplificar a resposta da confirmação W/H para depender apenas dos caracteres, mantendo a validação prévia de dois itens distintos.
+- [x] Adicionar teste para sequência idêntica com W confirmado aprovar.
+- [x] Executar testes unitários, TypeScript, lint e build após a correção.
+- [ ] Validar a leitura real na prévia atualizada antes de gerar APK.
