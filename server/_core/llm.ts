@@ -59,9 +59,6 @@ export type InvokeParams = {
   tool_choice?: ToolChoice;
   maxTokens?: number;
   max_tokens?: number;
-  maxCompletionTokens?: number;
-  max_completion_tokens?: number;
-  maxRetries?: number;
   outputSchema?: OutputSchema;
   output_schema?: OutputSchema;
   responseFormat?: ResponseFormat;
@@ -285,16 +282,13 @@ const computeBackoffDelay = (attempt: number, retryAfterMs?: number): number => 
 
 // Retries non-2xx responses and network errors with exponential backoff, then returns
 // the final Response so callers keep their existing error handling.
-const fetchWithBackoff = async (url: string, init: FetchInit, maxRetries = RETRY_MAX_RETRIES): Promise<Response> => {
+const fetchWithBackoff = async (url: string, init: FetchInit): Promise<Response> => {
   let lastError: unknown;
-  const retryLimit = Number.isFinite(maxRetries)
-    ? Math.max(0, Math.min(RETRY_MAX_RETRIES, Math.floor(maxRetries)))
-    : RETRY_MAX_RETRIES;
 
-  for (let attempt = 0; attempt <= retryLimit; attempt++) {
+  for (let attempt = 0; attempt <= RETRY_MAX_RETRIES; attempt++) {
     try {
       const response = await fetch(url, init);
-      if (response.ok || attempt === retryLimit) {
+      if (response.ok || attempt === RETRY_MAX_RETRIES) {
         return response;
       }
 
@@ -305,14 +299,14 @@ const fetchWithBackoff = async (url: string, init: FetchInit, maxRetries = RETRY
         // Body already settled; nothing to clean up.
       }
       console.warn(
-        `LLM request retry ${attempt + 1}/${retryLimit} after status ${response.status}`,
+        `LLM request retry ${attempt + 1}/${RETRY_MAX_RETRIES} after status ${response.status}`,
       );
       await sleep(computeBackoffDelay(attempt, retryAfterMs));
     } catch (error) {
       lastError = error;
-      if (attempt === retryLimit) throw error;
+      if (attempt === RETRY_MAX_RETRIES) throw error;
       console.warn(
-        `LLM request retry ${attempt + 1}/${retryLimit} after network error`,
+        `LLM request retry ${attempt + 1}/${RETRY_MAX_RETRIES} after network error`,
       );
       await sleep(computeBackoffDelay(attempt));
     }
@@ -340,9 +334,6 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     reasoning,
     maxTokens,
     max_tokens,
-    maxCompletionTokens,
-    max_completion_tokens,
-    maxRetries,
   } = params;
 
   const payload: Record<string, unknown> = {
@@ -367,11 +358,6 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     payload.max_tokens = resolvedMaxTokens;
   }
 
-  const resolvedMaxCompletionTokens = max_completion_tokens ?? maxCompletionTokens;
-  if (typeof resolvedMaxCompletionTokens === "number") {
-    payload.max_completion_tokens = resolvedMaxCompletionTokens;
-  }
-
   if (thinking) {
     payload.thinking = thinking;
   }
@@ -390,18 +376,14 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     payload.response_format = normalizedResponseFormat;
   }
 
-  const response = await fetchWithBackoff(
-    resolveApiUrl(),
-    {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        authorization: `Bearer ${ENV.forgeApiKey}`,
-      },
-      body: JSON.stringify(payload),
+  const response = await fetchWithBackoff(resolveApiUrl(), {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      authorization: `Bearer ${ENV.forgeApiKey}`,
     },
-    maxRetries,
-  );
+    body: JSON.stringify(payload),
+  });
 
   if (!response.ok) {
     const errorText = await response.text();

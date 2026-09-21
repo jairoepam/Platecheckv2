@@ -30,7 +30,7 @@ const FOCUSED_EXTRACTION_PROMPT = `Você é um leitor de conferência visual. Re
 
 ${COMMON_RULES} Não deixe ambos vazios se houver qualquer sequência legível. Preserve a diferença real entre os itens.`;
 
-const WH_VERIFICATION_PROMPT = `Você receberá dois recortes de objetos que já foram confirmados em uma única foto: primeiro a folha impressa e depois a placa Mercosul física. Verifique somente as posições indicadas, distinguindo W de H. W possui traços diagonais formando vales; H possui duas hastes e uma barra horizontal. Leia os dois recortes independentemente e não tente fazer os caracteres coincidirem. Retorne exatamente uma entrada para cada posição indicada. Se algum caractere não estiver nítido, marque ambiguous como true.`;
+const WH_VERIFICATION_PROMPT = `Você receberá dois recortes: primeiro a folha e depois a placa. Antes de ler, confirme que o primeiro contém uma folha/documento real e o segundo contém uma placa física real; marque sheetVisible, plateVisible e distinctItems. Verifique somente o caractere indicado, distinguindo W de H. W possui traços diagonais formando vales; H possui duas hastes e uma barra horizontal. Leia cada imagem independentemente. Não tente fazer os caracteres coincidirem. Se algum deles não estiver nítido, marque ambiguous como true.`;
 
 const FULL_RESPONSE_FORMAT = {
   type: "json_schema" as const,
@@ -82,23 +82,14 @@ const WH_RESPONSE_FORMAT = {
     schema: {
       type: "object",
       properties: {
-        positions: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              position: { type: "integer", minimum: 1, maximum: 7 },
-              sheetCharacter: { type: "string", enum: ["W", "H"] },
-              plateCharacter: { type: "string", enum: ["W", "H"] },
-              ambiguous: { type: "boolean" },
-            },
-            required: ["position", "sheetCharacter", "plateCharacter", "ambiguous"],
-            additionalProperties: false,
-          },
-        },
+        sheetCharacter: { type: "string", enum: ["W", "H"] },
+        plateCharacter: { type: "string", enum: ["W", "H"] },
         ambiguous: { type: "boolean" },
+        sheetVisible: { type: "boolean" },
+        plateVisible: { type: "boolean" },
+        distinctItems: { type: "boolean" },
       },
-      required: ["positions", "ambiguous"],
+      required: ["sheetCharacter", "plateCharacter", "ambiguous", "sheetVisible", "plateVisible", "distinctItems"],
       additionalProperties: false,
     },
   },
@@ -132,12 +123,6 @@ function replaceCharacter(sequence: string, index: number, character: unknown) {
   return `${sequence.slice(0, index)}${verified}${sequence.slice(index + 1)}`;
 }
 
-function findWhPositions(sheet: string, plate: string) {
-  return Array.from({ length: 7 }, (_, index) => index).filter(
-    (index) => /[WH]/.test(sheet[index] ?? "") || /[WH]/.test(plate[index] ?? ""),
-  );
-}
-
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -159,18 +144,18 @@ export const appRouter = router({
         && input.knownSheet
         && input.knownPlate
       ) {
-        const whPositions = findWhPositions(input.knownSheet, input.knownPlate);
+        const whIndex = Array.from(input.knownSheet).findIndex(
+          (character, index) => /[WH]/.test(character) || /[WH]/.test(input.knownPlate?.[index] ?? ""),
+        );
         const verificationResponse = await invokeLLM({
           model: "gpt-5-mini",
           reasoning: { effort: "minimal" },
-          maxCompletionTokens: 160,
-          maxRetries: 1,
           messages: [
             { role: "system", content: WH_VERIFICATION_PROMPT },
             {
               role: "user",
               content: [
-                { type: "text", text: `Verifique somente as posições ${whPositions.map((index) => index + 1).join(", ")}. A leitura inicial foi folha ${input.knownSheet} e placa ${input.knownPlate}. Retorne uma entrada para cada posição solicitada.` },
+                { type: "text", text: `Verifique somente a posição ${whIndex + 1}. A leitura inicial foi folha ${input.knownSheet} e placa ${input.knownPlate}.` },
                 { type: "image_url", image_url: { url: `data:image/jpeg;base64,${input.sheetCropBase64}`, detail: "auto" } },
                 { type: "image_url", image_url: { url: `data:image/jpeg;base64,${input.plateCropBase64}`, detail: "auto" } },
               ],
@@ -180,33 +165,15 @@ export const appRouter = router({
         });
         const verification = parseModelJson(verificationResponse.choices[0]?.message.content);
         if (!Object.keys(verification).length) logUnusableResponse("W/H verification", verificationResponse);
-        const verificationPositions = Array.isArray(verification.positions)
-          ? verification.positions.filter((position): position is Record<string, unknown> => Boolean(position) && typeof position === "object")
-          : [];
-        const positionAt = (index: number) => verificationPositions.find((position) => position.position === index + 1);
-        const verifiedSheet = whPositions.reduce(
-          (sequence, index) => replaceCharacter(sequence, index, positionAt(index)?.sheetCharacter),
-          input.knownSheet,
-        );
-        const verifiedPlate = whPositions.reduce(
-          (sequence, index) => replaceCharacter(sequence, index, positionAt(index)?.plateCharacter),
-          input.knownPlate,
-        );
-        const everyPositionConfirmed = whPositions.every((index) => {
-          const position = positionAt(index);
-          return (position?.sheetCharacter === "W" || position?.sheetCharacter === "H")
-            && (position?.plateCharacter === "W" || position?.plateCharacter === "H")
-            && position?.ambiguous === false;
-        });
         const result = buildConferenceResult({
-          sheet: verifiedSheet,
-          plate: verifiedPlate,
+          sheet: replaceCharacter(input.knownSheet, whIndex, verification.sheetCharacter),
+          plate: replaceCharacter(input.knownPlate, whIndex, verification.plateCharacter),
           sheetConfidence: 95,
           plateConfidence: 95,
-          whAmbiguous: verification.ambiguous !== false || !everyPositionConfirmed,
-          sheetVisible: true,
-          plateVisible: true,
-          distinctItems: true,
+          whAmbiguous: verification.ambiguous !== false,
+          sheetVisible: verification.sheetVisible,
+          plateVisible: verification.plateVisible,
+          distinctItems: verification.distinctItems,
         });
         console.info(`[conference] W/H verification completed in ${Math.round(performance.now() - startedAt)}ms`);
         return result;
