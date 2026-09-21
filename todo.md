@@ -79,6 +79,28 @@
 - [x] Remover o loading circular da tela de processamento.
 - [x] Manter somente o tempo de resposta discreto no rodapé.
 - [x] Validar que a simplificação visual não altera a análise.
-- [ ] Confirmar a URL e a ramificação do repositório GitHub existente.
-- [ ] Preparar o commit da versão atual do Plate Check para o GitHub.
-- [ ] Enviar o commit ao repositório após confirmação explícita do destino.
+- [x] Confirmar a URL e a ramificação do repositório GitHub existente.
+- [x] Preparar o commit da versão atual do Plate Check para o GitHub.
+- [x] Enviar o commit ao repositório após confirmação explícita do destino.
+- [x] Criar pull request de manus/plate-check-current para main no GitHub.
+- [x] Mesclar o pull request #1 na ramificação main do repositório GitHub.
+- [x] Corrigir a URL de produção do backend usada pelo APK instalado para realizar a análise de fotos.
+- [x] Validar a comunicação do APK com o endpoint publicado antes de gerar uma nova compilação.
+
+
+## Recuperação W/H após rollback para f96ebc59 — 2026-09-21
+
+O rollback restaurou a lógica anterior, que executa a confirmação extra em toda leitura contendo W/H e usa a resposta dessa chamada para montar o resultado. A correção manterá o comportamento seguro da versão estável, mas limitará a confirmação a ambiguidade ou baixa confiança e preservará as sequências originais quando a confirmação não concluir.
+
+- [x] Diagnosticar a causa na versão f96ebc59.
+- [x] Corrigir gatilho W/H e preservar caracteres no fallback.
+- [x] Adicionar testes para aprovação, divergência e revisão W/H.
+- [x] Executar testes, TypeScript, lint e build.
+- [ ] Salvar checkpoint da correção sem gerar APK.
+
+## Correção adicional da grade W/H — 2026-09-21
+
+- [x] Fazer a grade recuperar o caractere da sequência completa quando a posição vier desconhecida.
+- [x] Manter a revisão de segurança quando a confirmação W/H realmente falhar ou continuar ambígua.
+- [x] Validar testes, TypeScript, lint e build.
+- [ ] Repetir a foto na prévia atualizada para confirmar visualmente a letra sem traço.

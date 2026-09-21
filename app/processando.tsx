@@ -2,16 +2,18 @@ import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import * as Haptics from "expo-haptics";
 import { Stack, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from "react-native";
 import * as ImageManipulator from "expo-image-manipulator";
 
 import { ScreenContainer } from "@/components/screen-container";
 import { saveConferenceResult } from "@/lib/conference-history";
+import { markWhVerificationUnavailable, shouldVerifyWh, type ConferenceResult } from "@/lib/conference-logic";
 import { getPendingConference, setConferenceResult } from "@/lib/conference-session";
 import { trpc } from "@/lib/trpc";
 
 const STEPS = ["Localizando as duas regiões", "Lendo as sequências", "Comparando caractere a caractere"];
+const WH_VERIFICATION_TIMEOUT_MS = 22_000;
 
 function ResponseTime() {
   const startedAt = useRef(Date.now());
@@ -50,11 +52,34 @@ export default function ProcessingScreen() {
   const pending = useMemo(() => getPendingConference(), []);
   const [started, setStarted] = useState(false);
   const fallbackRequested = useRef(false);
+  const pendingWhResult = useRef<ConferenceResult | null>(null);
+  const whVerificationSettled = useRef(false);
+  const whVerificationTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const finalizeResult = useCallback(async (result: ConferenceResult) => {
+    if (whVerificationTimeout.current) {
+      clearTimeout(whVerificationTimeout.current);
+      whVerificationTimeout.current = null;
+    }
+    setConferenceResult(result);
+    await saveConferenceResult(result);
+    await Haptics.notificationAsync(
+      result.status === "approved"
+        ? Haptics.NotificationFeedbackType.Success
+        : Haptics.NotificationFeedbackType.Warning,
+    );
+    router.replace("/resultado");
+  }, [router]);
+
   const analysis = trpc.conference.analyze.useMutation({
     onSuccess: async (result) => {
-      const containsCriticalWh = /[WH]/.test(`${result.sheet ?? ""}${result.plate ?? ""}`);
-      const canVerifyOnlyWh = containsCriticalWh && Boolean(result.sheet && result.plate);
-      const needsWhVerification = canVerifyOnlyWh && (result.status === "approved" || result.status === "inconclusive");
+      const isWhVerificationResponse = Boolean(pendingWhResult.current);
+      if (!isWhVerificationResponse && fallbackRequested.current && whVerificationSettled.current) return;
+      if (isWhVerificationResponse) {
+        if (whVerificationSettled.current) return;
+        whVerificationSettled.current = true;
+        pendingWhResult.current = null;
+      }
+      const needsWhVerification = shouldVerifyWh(result);
       const needsFocusedVerification = result.status === "inconclusive" && !needsWhVerification;
       if (!fallbackRequested.current && (needsWhVerification || needsFocusedVerification) && pending) {
         try {
@@ -65,6 +90,18 @@ export default function ProcessingScreen() {
             pending.imageHeight,
             needsWhVerification ? 800 : 1200,
           );
+          if (needsWhVerification) {
+            pendingWhResult.current = result;
+            whVerificationSettled.current = false;
+            whVerificationTimeout.current = setTimeout(() => {
+              const originalResult = pendingWhResult.current;
+              if (!originalResult || whVerificationSettled.current) return;
+              whVerificationSettled.current = true;
+              pendingWhResult.current = null;
+              whVerificationTimeout.current = null;
+              void finalizeResult(markWhVerificationUnavailable(originalResult));
+            }, WH_VERIFICATION_TIMEOUT_MS);
+          }
           analysis.mutate(
             needsWhVerification
               ? {
@@ -78,17 +115,21 @@ export default function ProcessingScreen() {
           );
           return;
         } catch {
-          // Se os recortes falharem, mantém o resultado inconclusivo original.
+          if (needsWhVerification) {
+            await finalizeResult(markWhVerificationUnavailable(result));
+            return;
+          }
+          // Se os recortes gerais falharem, mantém o resultado inconclusivo original.
         }
       }
-      setConferenceResult(result);
-      await saveConferenceResult(result);
-      await Haptics.notificationAsync(
-        result.status === "approved"
-          ? Haptics.NotificationFeedbackType.Success
-          : Haptics.NotificationFeedbackType.Warning,
-      );
-      router.replace("/resultado");
+      await finalizeResult(result);
+    },
+    onError: async () => {
+      const originalResult = pendingWhResult.current;
+      if (!originalResult || whVerificationSettled.current) return;
+      whVerificationSettled.current = true;
+      pendingWhResult.current = null;
+      await finalizeResult(markWhVerificationUnavailable(originalResult));
     },
   });
 
@@ -102,6 +143,10 @@ export default function ProcessingScreen() {
       analysis.mutate({ imageBase64: pending.imageBase64 });
     }
   }, [analysis, pending, router, started]);
+
+  useEffect(() => () => {
+    if (whVerificationTimeout.current) clearTimeout(whVerificationTimeout.current);
+  }, []);
 
   return (
     <ScreenContainer className="p-5" edges={["top", "bottom", "left", "right"]}>
