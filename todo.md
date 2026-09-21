@@ -97,3 +97,10 @@ O rollback restaurou a lógica anterior, que executa a confirmação extra em to
 - [x] Adicionar testes para aprovação, divergência e revisão W/H.
 - [x] Executar testes, TypeScript, lint e build.
 - [ ] Salvar checkpoint da correção sem gerar APK.
+
+## Correção adicional da grade W/H — 2026-09-21
+
+- [x] Fazer a grade recuperar o caractere da sequência completa quando a posição vier desconhecida.
+- [x] Manter a revisão de segurança quando a confirmação W/H realmente falhar ou continuar ambígua.
+- [x] Validar testes, TypeScript, lint e build.
+- [ ] Repetir a foto na prévia atualizada para confirmar visualmente a letra sem traço.

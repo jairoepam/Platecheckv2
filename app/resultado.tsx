@@ -62,9 +62,8 @@ export default function ResultScreen() {
               const state = character.state;
               const background = state === "match" ? "#EAF8F0" : state === "different" ? "#FFF0EF" : "#FFF7E8";
               const color = state === "match" ? "#178A4B" : state === "different" ? "#C93737" : "#C97800";
-              const visibleCharacter = state === "unknown" && character.plate === "–"
-                ? result.plate?.[character.position - 1] ?? "–"
-                : character.plate;
+              const sequenceCharacter = result.plate?.[character.position - 1] ?? result.sheet?.[character.position - 1];
+              const visibleCharacter = state === "unknown" ? sequenceCharacter ?? character.plate : character.plate;
               return <View key={character.position} style={[styles.characterBox, { backgroundColor: background }]}><Text style={styles.position}>{character.position}</Text><Text style={[styles.character, { color }]}>{visibleCharacter}</Text></View>;
             })}
           </View>
