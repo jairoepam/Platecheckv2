@@ -11,11 +11,14 @@ export type ConferenceResult = {
   status: ConferenceStatus;
   sheet: string | null;
   plate: string | null;
+  whAmbiguous: boolean;
   confidence: number;
   differences: number;
   characters: CharacterComparison[];
   message: string;
 };
+
+export const WH_CONFIDENCE_THRESHOLD = 90;
 
 export type ExtractedSequences = {
   sheet?: unknown;
@@ -56,6 +59,16 @@ export function canonicalizeMercosurSequence(value: unknown): string {
 
 export function isValidPlateSequence(value: string): boolean {
   return PLATE_PATTERN.test(value);
+}
+
+export function shouldVerifyWh(result: ConferenceResult): boolean {
+  const containsWh = /[WH]/.test(`${result.sheet ?? ""}${result.plate ?? ""}`);
+  return Boolean(
+    result.sheet
+    && result.plate
+    && containsWh
+    && (result.whAmbiguous || result.confidence < WH_CONFIDENCE_THRESHOLD),
+  );
 }
 
 function normalizedConfidence(value: unknown, fallback: number): number {
@@ -107,6 +120,7 @@ export function buildConferenceResult(extraction: ExtractedSequences): Conferenc
       status: "inconclusive",
       sheet: sheetVisible && isValidPlateSequence(sheet) ? sheet : null,
       plate: plateVisible && isValidPlateSequence(plate) ? plate : null,
+      whAmbiguous,
       confidence,
       differences: 0,
       characters: preserveSequenceCharacters(
@@ -133,6 +147,7 @@ export function buildConferenceResult(extraction: ExtractedSequences): Conferenc
       status: "approved",
       sheet,
       plate,
+      whAmbiguous,
       confidence,
       differences,
       characters,
@@ -144,6 +159,7 @@ export function buildConferenceResult(extraction: ExtractedSequences): Conferenc
     status: "divergent",
     sheet,
     plate,
+    whAmbiguous,
     confidence,
     differences,
     characters,
@@ -165,6 +181,7 @@ export function markWhVerificationUnavailable(result: ConferenceResult): Confere
   return {
     ...result,
     status: "inconclusive",
+    whAmbiguous: true,
     characters,
     message: "Não foi possível confirmar com segurança os caracteres W/H. Faça uma nova foto para evitar uma aprovação incorreta.",
   };

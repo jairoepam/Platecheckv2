@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildConferenceResult, isValidPlateSequence, markWhVerificationUnavailable, normalizeSequence } from "../lib/conference-logic";
+import { buildConferenceResult, isValidPlateSequence, markWhVerificationUnavailable, normalizeSequence, shouldVerifyWh } from "../lib/conference-logic";
 
 describe("conference sequence logic", () => {
   const bothItems = { sheetVisible: true, plateVisible: true, distinctItems: true };
@@ -45,6 +45,7 @@ describe("conference sequence logic", () => {
 
     expect(result.status).toBe("approved");
     expect(result.characters[1]).toMatchObject({ sheet: "W", plate: "W", state: "match" });
+    expect(shouldVerifyWh(result)).toBe(false);
   });
 
   it("blocks approval when the reader reports W/H ambiguity", () => {
@@ -58,6 +59,7 @@ describe("conference sequence logic", () => {
 
     expect(result.status).toBe("inconclusive");
     expect(result.characters[2]).toMatchObject({ sheet: "W", plate: "W", state: "unknown" });
+    expect(shouldVerifyWh(result)).toBe(true);
   });
 
   it("downgrades an unverified W/H approval to review", () => {

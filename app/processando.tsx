@@ -8,7 +8,7 @@ import * as ImageManipulator from "expo-image-manipulator";
 
 import { ScreenContainer } from "@/components/screen-container";
 import { saveConferenceResult } from "@/lib/conference-history";
-import { markWhVerificationUnavailable, type ConferenceResult } from "@/lib/conference-logic";
+import { markWhVerificationUnavailable, shouldVerifyWh, type ConferenceResult } from "@/lib/conference-logic";
 import { getPendingConference, setConferenceResult } from "@/lib/conference-session";
 import { trpc } from "@/lib/trpc";
 
@@ -83,10 +83,8 @@ export default function ProcessingScreen() {
           whVerificationTimeout.current = null;
         }
       }
-      const containsCriticalWh = /[WH]/.test(`${result.sheet ?? ""}${result.plate ?? ""}`);
-      const canVerifyOnlyWh = containsCriticalWh && Boolean(result.sheet && result.plate);
-      const needsWhVerification = canVerifyOnlyWh && (result.status === "approved" || result.status === "inconclusive");
-      const needsFocusedVerification = result.status === "inconclusive" && !needsWhVerification;
+      const needsWhVerification = shouldVerifyWh(result);
+      const needsFocusedVerification = result.status === "inconclusive" && !needsWhVerification && !result.whAmbiguous;
       if (!fallbackRequested.current && (needsWhVerification || needsFocusedVerification) && pending) {
         try {
           fallbackRequested.current = true;

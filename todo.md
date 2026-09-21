@@ -130,3 +130,12 @@
 - [x] Garantir na lógica central que posições W/H desconhecidas mantenham os caracteres das sequências lidas.
 - [x] Reforçar a tela para usar a sequência completa como fonte visual quando uma posição vier como “–”.
 - [x] Testar ELW4C33 e DWV5B70 em revisão sem substituir W por traço.
+
+
+## Regra de aprovação W/H claro — 2026-09-21
+
+- [x] Expor a informação de ambiguidade W/H no resultado interno.
+- [x] Não executar confirmação extra para sequências iguais com W/H claro e confiança alta.
+- [x] Manter revisão para W/H ambíguo ou confiança baixa.
+- [x] Manter divergência obrigatória quando W e H forem diferentes.
+- [x] Testar ELW4C33 igual como Aprovado e UPW versus UPH como Divergente.
