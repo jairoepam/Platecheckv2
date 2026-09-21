@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildConferenceResult, isValidPlateSequence, normalizeSequence } from "../lib/conference-logic";
+import { buildConferenceResult, isValidPlateSequence, markWhVerificationUnavailable, normalizeSequence } from "../lib/conference-logic";
 
 describe("conference sequence logic", () => {
   const bothItems = { sheetVisible: true, plateVisible: true, distinctItems: true };
@@ -44,6 +44,16 @@ describe("conference sequence logic", () => {
     const result = buildConferenceResult({ ...bothItems, sheet: "UPH0A08", plate: "UPH0A08", sheetConfidence: 88, plateConfidence: 88, whAmbiguous: true });
     expect(result.status).toBe("inconclusive");
     expect(result.message).toContain("W e H");
+  });
+
+  it("downgrades an unverified W/H approval to review", () => {
+    const approved = buildConferenceResult({ ...bothItems, sheet: "UPW0A08", plate: "UPW0A08", sheetConfidence: 99, plateConfidence: 99 });
+    const result = markWhVerificationUnavailable(approved);
+
+    expect(result.status).toBe("inconclusive");
+    expect(result.message).toContain("confirmar com segurança");
+    expect(result.characters[2]).toMatchObject({ sheet: "–", plate: "–", state: "unknown" });
+    expect(result.characters[0].state).toBe("match");
   });
 
   it("identifies each divergent character", () => {

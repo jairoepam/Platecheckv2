@@ -86,3 +86,23 @@
 - [x] Mesclar o pull request #1 na ramificação main do repositório GitHub.
 - [x] Corrigir a URL de produção do backend usada pelo APK instalado para realizar a análise de fotos.
 - [x] Validar a comunicação do APK com o endpoint publicado antes de gerar uma nova compilação.
+- [ ] Verificar a conta Expo/EAS atualmente autenticada no projeto Plate Check.
+- [ ] Autenticar a conta Expo correta sem compartilhar credenciais no chat.
+- [ ] Confirmar o vínculo e a permissão da conta para compilar o APK.
+- [ ] Medir a latência adicional da confirmação W/H observada no APK publicado.
+- [x] Reduzir a análise extra de H/W sem permitir confusão entre os dois caracteres.
+- [x] Validar por testes a classificação dos cenários com H, W e divergência.
+- [ ] Verificar o repositório oficial do Plate Check na conta GitHub conectada.
+- [ ] Identificar o projeto Expo/EAS associado à compilação do APK.
+- [ ] Sincronizar a correção do endpoint público com a ramificação main do GitHub.
+- [ ] Validar a configuração do projeto Expo antes de uma nova compilação.
+
+
+## Correção W/H — modo seguro aprovado em 2026-09-21
+
+- [x] Otimizar os recortes e o payload da confirmação W/H mantendo a segunda verificação.
+- [x] Limitar a saída da confirmação W/H e evitar tentativas excessivas quando a chamada extra falhar.
+- [x] Converter erro ou timeout da confirmação W/H em Revisão necessária, nunca em aprovação.
+- [x] Preservar UPW versus UPH como divergência quando a confirmação visual concluir sem ambiguidade.
+- [x] Testar aprovação, divergência, ambiguidade, ausência de itens e falha da confirmação W/H.
+- [ ] Validar o novo APK somente após a correção estar sincronizada na fonte escolhida e compilada novamente.

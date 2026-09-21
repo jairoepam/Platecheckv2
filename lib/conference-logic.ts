@@ -138,3 +138,24 @@ export function buildConferenceResult(extraction: ExtractedSequences): Conferenc
     message: `${differences} ${differences === 1 ? "posição diferente" : "posições diferentes"}.`,
   };
 }
+
+/**
+ * Rebaixa uma leitura que seria aprovada quando a confirmação extra de W/H
+ * falha. A sequência original permanece visível para diagnóstico, mas as
+ * posições que dependem de W/H deixam de ser consideradas confirmadas.
+ */
+export function markWhVerificationUnavailable(result: ConferenceResult): ConferenceResult {
+  const characters = result.characters.map((character, index) => {
+    const dependsOnWh = /[WH]/.test(result.sheet?.[index] ?? "") || /[WH]/.test(result.plate?.[index] ?? "");
+    return dependsOnWh
+      ? { ...character, sheet: "–", plate: "–", state: "unknown" as const }
+      : character;
+  });
+
+  return {
+    ...result,
+    status: "inconclusive",
+    characters,
+    message: "Não foi possível confirmar com segurança os caracteres W/H. Faça uma nova foto para evitar uma aprovação incorreta.",
+  };
+}
