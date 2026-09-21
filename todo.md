@@ -123,3 +123,10 @@
 - [x] Adicionar teste para sequência idêntica com W confirmado aprovar.
 - [x] Executar testes unitários, TypeScript, lint e build após a correção.
 - [ ] Validar a leitura real na prévia atualizada antes de gerar APK.
+
+
+## Regressão do traço no lugar de W/H — 2026-09-21
+
+- [x] Garantir na lógica central que posições W/H desconhecidas mantenham os caracteres das sequências lidas.
+- [x] Reforçar a tela para usar a sequência completa como fonte visual quando uma posição vier como “–”.
+- [x] Testar ELW4C33 e DWV5B70 em revisão sem substituir W por traço.

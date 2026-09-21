@@ -73,6 +73,14 @@ function unknownCharacters(sheet: string, plate: string): CharacterComparison[] 
   }));
 }
 
+function preserveSequenceCharacters(characters: CharacterComparison[], sheet: string, plate: string) {
+  return characters.map((character, index) => ({
+    ...character,
+    sheet: character.sheet === "–" ? sheet[index] ?? "–" : character.sheet,
+    plate: character.plate === "–" ? plate[index] ?? "–" : character.plate,
+  }));
+}
+
 export function buildConferenceResult(extraction: ExtractedSequences): ConferenceResult {
   const sheet = canonicalizeMercosurSequence(extraction.sheet);
   const plate = canonicalizeMercosurSequence(extraction.plate);
@@ -101,7 +109,11 @@ export function buildConferenceResult(extraction: ExtractedSequences): Conferenc
       plate: plateVisible && isValidPlateSequence(plate) ? plate : null,
       confidence,
       differences: 0,
-      characters: unknownCharacters(sheetVisible ? sheet : "", plateVisible ? plate : ""),
+      characters: preserveSequenceCharacters(
+        unknownCharacters(sheetVisible ? sheet : "", plateVisible ? plate : ""),
+        sheetVisible ? sheet : "",
+        plateVisible ? plate : "",
+      ),
       message: whAmbiguous
         ? "A leitura encontrou dúvida entre W e H. Fotografe novamente para evitar uma aprovação incorreta."
         : missingItemMessage,
@@ -145,7 +157,7 @@ export function buildConferenceResult(extraction: ExtractedSequences): Conferenc
  * diagnóstico, mas as posições que dependem de W/H deixam de ser confirmadas.
  */
 export function markWhVerificationUnavailable(result: ConferenceResult): ConferenceResult {
-  const characters = result.characters.map((character, index) => {
+  const characters = preserveSequenceCharacters(result.characters, result.sheet ?? "", result.plate ?? "").map((character, index) => {
     const dependsOnWh = /[WH]/.test(result.sheet?.[index] ?? "") || /[WH]/.test(result.plate?.[index] ?? "");
     return dependsOnWh ? { ...character, state: "unknown" as const } : character;
   });

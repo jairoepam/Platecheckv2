@@ -53,6 +53,13 @@ describe("conference sequence logic", () => {
     expect(result.message).toContain("W e H");
   });
 
+  it("keeps the W visible when an ambiguous read needs review", () => {
+    const result = buildConferenceResult({ ...bothItems, sheet: "ELW4C33", plate: "ELW4C33", sheetConfidence: 100, plateConfidence: 100, whAmbiguous: true });
+
+    expect(result.status).toBe("inconclusive");
+    expect(result.characters[2]).toMatchObject({ sheet: "W", plate: "W", state: "unknown" });
+  });
+
   it("downgrades an unverified W/H approval to review", () => {
     const approved = buildConferenceResult({ ...bothItems, sheet: "UPW0A08", plate: "UPW0A08", sheetConfidence: 99, plateConfidence: 99 });
     const result = markWhVerificationUnavailable(approved);
