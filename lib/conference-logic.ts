@@ -11,6 +11,7 @@ export type ConferenceResult = {
   status: ConferenceStatus;
   sheet: string | null;
   plate: string | null;
+  whAmbiguous: boolean;
   confidence: number;
   differences: number;
   characters: CharacterComparison[];
@@ -27,6 +28,8 @@ export type ExtractedSequences = {
   plateVisible?: unknown;
   distinctItems?: unknown;
 };
+
+export const WH_CONFIDENCE_THRESHOLD = 90;
 
 const PLATE_PATTERN = /^[A-Z]{3}\d[A-Z]\d{2}$/;
 const MERCOSUR_POSITION_TYPES = ["letter", "letter", "letter", "digit", "letter", "digit", "digit"] as const;
@@ -58,6 +61,16 @@ export function isValidPlateSequence(value: string): boolean {
   return PLATE_PATTERN.test(value);
 }
 
+export function shouldVerifyWh(result: ConferenceResult): boolean {
+  const containsWh = /[WH]/.test(`${result.sheet ?? ""}${result.plate ?? ""}`);
+  return Boolean(
+    result.sheet
+    && result.plate
+    && containsWh
+    && (result.whAmbiguous || result.confidence < WH_CONFIDENCE_THRESHOLD),
+  );
+}
+
 function normalizedConfidence(value: unknown, fallback: number): number {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return fallback;
@@ -70,6 +83,14 @@ function unknownCharacters(sheet: string, plate: string): CharacterComparison[] 
     sheet: sheet[index] ?? "–",
     plate: plate[index] ?? "–",
     state: "unknown" as const,
+  }));
+}
+
+function preserveSequenceCharacters(characters: CharacterComparison[], sheet: string, plate: string) {
+  return characters.map((character, index) => ({
+    ...character,
+    sheet: character.sheet === "–" ? sheet[index] ?? "–" : character.sheet,
+    plate: character.plate === "–" ? plate[index] ?? "–" : character.plate,
   }));
 }
 
@@ -99,9 +120,14 @@ export function buildConferenceResult(extraction: ExtractedSequences): Conferenc
       status: "inconclusive",
       sheet: sheetVisible && isValidPlateSequence(sheet) ? sheet : null,
       plate: plateVisible && isValidPlateSequence(plate) ? plate : null,
+      whAmbiguous,
       confidence,
       differences: 0,
-      characters: unknownCharacters(sheetVisible ? sheet : "", plateVisible ? plate : ""),
+      characters: preserveSequenceCharacters(
+        unknownCharacters(sheetVisible ? sheet : "", plateVisible ? plate : ""),
+        sheetVisible ? sheet : "",
+        plateVisible ? plate : "",
+      ),
       message: whAmbiguous
         ? "A leitura encontrou dúvida entre W e H. Fotografe novamente para evitar uma aprovação incorreta."
         : missingItemMessage,
@@ -121,6 +147,7 @@ export function buildConferenceResult(extraction: ExtractedSequences): Conferenc
       status: "approved",
       sheet,
       plate,
+      whAmbiguous,
       confidence,
       differences,
       characters,
@@ -132,9 +159,25 @@ export function buildConferenceResult(extraction: ExtractedSequences): Conferenc
     status: "divergent",
     sheet,
     plate,
+    whAmbiguous,
     confidence,
     differences,
     characters,
     message: `${differences} ${differences === 1 ? "posição diferente" : "posições diferentes"}.`,
+  };
+}
+
+export function markWhVerificationUnavailable(result: ConferenceResult): ConferenceResult {
+  const characters = preserveSequenceCharacters(result.characters, result.sheet ?? "", result.plate ?? "").map((character, index) => {
+    const dependsOnWh = /[WH]/.test(result.sheet?.[index] ?? "") || /[WH]/.test(result.plate?.[index] ?? "");
+    return dependsOnWh ? { ...character, state: "unknown" as const } : character;
+  });
+
+  return {
+    ...result,
+    status: "inconclusive",
+    whAmbiguous: true,
+    characters,
+    message: "Não foi possível confirmar com segurança os caracteres W/H. Faça uma nova foto para evitar uma aprovação incorreta.",
   };
 }

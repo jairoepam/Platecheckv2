@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildConferenceResult, isValidPlateSequence, normalizeSequence } from "../lib/conference-logic";
+import { buildConferenceResult, isValidPlateSequence, markWhVerificationUnavailable, normalizeSequence, shouldVerifyWh } from "../lib/conference-logic";
 
 describe("conference sequence logic", () => {
   const bothItems = { sheetVisible: true, plateVisible: true, distinctItems: true };
@@ -40,10 +40,28 @@ describe("conference sequence logic", () => {
     expect(result.characters[2].state).toBe("different");
   });
 
+  it("approves identical W sequences without an unnecessary second verification", () => {
+    const result = buildConferenceResult({ ...bothItems, sheet: "ELW4C33", plate: "ELW4C33", sheetConfidence: 98, plateConfidence: 98, whAmbiguous: false });
+
+    expect(result.status).toBe("approved");
+    expect(shouldVerifyWh(result)).toBe(false);
+    expect(result.characters[2]).toMatchObject({ sheet: "W", plate: "W", state: "match" });
+  });
+
   it("blocks approval when the reader reports W/H ambiguity", () => {
     const result = buildConferenceResult({ ...bothItems, sheet: "UPH0A08", plate: "UPH0A08", sheetConfidence: 88, plateConfidence: 88, whAmbiguous: true });
     expect(result.status).toBe("inconclusive");
     expect(result.message).toContain("W e H");
+    expect(result.characters[2]).toMatchObject({ sheet: "H", plate: "H", state: "unknown" });
+    expect(shouldVerifyWh(result)).toBe(true);
+  });
+
+  it("keeps W visible when the extra verification is unavailable", () => {
+    const approved = buildConferenceResult({ ...bothItems, sheet: "DWV5B70", plate: "DWV5B70", sheetConfidence: 98, plateConfidence: 98, whAmbiguous: false });
+    const result = markWhVerificationUnavailable(approved);
+
+    expect(result.status).toBe("inconclusive");
+    expect(result.characters[1]).toMatchObject({ sheet: "W", plate: "W", state: "unknown" });
   });
 
   it("identifies each divergent character", () => {
