@@ -52,7 +52,7 @@ describe("conference sequence logic", () => {
 
     expect(result.status).toBe("inconclusive");
     expect(result.message).toContain("confirmar com segurança");
-    expect(result.characters[2]).toMatchObject({ sheet: "–", plate: "–", state: "unknown" });
+    expect(result.characters[2]).toMatchObject({ sheet: "W", plate: "W", state: "unknown" });
     expect(result.characters[0].state).toBe("match");
   });
 

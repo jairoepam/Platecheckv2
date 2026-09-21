@@ -106,3 +106,10 @@
 - [x] Preservar UPW versus UPH como divergência quando a confirmação visual concluir sem ambiguidade.
 - [x] Testar aprovação, divergência, ambiguidade, ausência de itens e falha da confirmação W/H.
 - [ ] Validar o novo APK somente após a correção estar sincronizada na fonte escolhida e compilada novamente.
+
+
+## Exibição de W/H em revisão — 2026-09-21
+
+- [x] Mostrar o caractere W/H lido na grade mesmo quando a confirmação extra não concluir.
+- [x] Manter a posição como não confirmada e preservar Revisão necessária.
+- [x] Atualizar o teste do fallback e validar TypeScript, testes e lint.

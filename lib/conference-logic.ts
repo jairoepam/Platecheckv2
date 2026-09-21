@@ -141,15 +141,13 @@ export function buildConferenceResult(extraction: ExtractedSequences): Conferenc
 
 /**
  * Rebaixa uma leitura que seria aprovada quando a confirmação extra de W/H
- * falha. A sequência original permanece visível para diagnóstico, mas as
- * posições que dependem de W/H deixam de ser consideradas confirmadas.
+ * falha. A sequência original e o caractere lido permanecem visíveis para
+ * diagnóstico, mas as posições que dependem de W/H deixam de ser confirmadas.
  */
 export function markWhVerificationUnavailable(result: ConferenceResult): ConferenceResult {
   const characters = result.characters.map((character, index) => {
     const dependsOnWh = /[WH]/.test(result.sheet?.[index] ?? "") || /[WH]/.test(result.plate?.[index] ?? "");
-    return dependsOnWh
-      ? { ...character, sheet: "–", plate: "–", state: "unknown" as const }
-      : character;
+    return dependsOnWh ? { ...character, state: "unknown" as const } : character;
   });
 
   return {
