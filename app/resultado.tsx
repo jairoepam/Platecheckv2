@@ -60,9 +60,12 @@ export default function ResultScreen() {
           <View style={styles.grid}>
             {result.characters.map((character) => {
               const state = character.state;
-              const background = state === "match" ? "#EAF8F0" : state === "different" ? "#FFF0EF" : "#F0F3F7";
-              const color = state === "match" ? "#178A4B" : state === "different" ? "#C93737" : "#627089";
-              return <View key={character.position} style={[styles.characterBox, { backgroundColor: background }]}><Text style={styles.position}>{character.position}</Text><Text style={[styles.character, { color }]}>{state === "unknown" ? "–" : character.plate}</Text></View>;
+              const background = state === "match" ? "#EAF8F0" : state === "different" ? "#FFF0EF" : "#FFF7E8";
+              const color = state === "match" ? "#178A4B" : state === "different" ? "#C93737" : "#C97800";
+              const visibleCharacter = state === "unknown" && character.plate === "–"
+                ? result.plate?.[character.position - 1] ?? "–"
+                : character.plate;
+              return <View key={character.position} style={[styles.characterBox, { backgroundColor: background }]}><Text style={styles.position}>{character.position}</Text><Text style={[styles.character, { color }]}>{visibleCharacter}</Text></View>;
             })}
           </View>
         </View>

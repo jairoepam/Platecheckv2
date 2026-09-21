@@ -86,3 +86,14 @@
 - [x] Mesclar o pull request #1 na ramificação main do repositório GitHub.
 - [x] Corrigir a URL de produção do backend usada pelo APK instalado para realizar a análise de fotos.
 - [x] Validar a comunicação do APK com o endpoint publicado antes de gerar uma nova compilação.
+
+
+## Recuperação W/H após rollback para f96ebc59 — 2026-09-21
+
+O rollback restaurou a lógica anterior, que executa a confirmação extra em toda leitura contendo W/H e usa a resposta dessa chamada para montar o resultado. A correção manterá o comportamento seguro da versão estável, mas limitará a confirmação a ambiguidade ou baixa confiança e preservará as sequências originais quando a confirmação não concluir.
+
+- [x] Diagnosticar a causa na versão f96ebc59.
+- [x] Corrigir gatilho W/H e preservar caracteres no fallback.
+- [x] Adicionar testes para aprovação, divergência e revisão W/H.
+- [x] Executar testes, TypeScript, lint e build.
+- [ ] Salvar checkpoint da correção sem gerar APK.

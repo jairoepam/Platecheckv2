@@ -37,12 +37,8 @@ export const API_BASE_URL = env.apiBaseUrl;
  * URL pattern: https://PORT-sandboxid.region.domain
  */
 export function getApiBaseUrl(): string {
-  // If API_BASE_URL is set, use it
-  if (API_BASE_URL) {
-    return API_BASE_URL.replace(/\/$/, "");
-  }
-
-  // On web, derive from current hostname by replacing port 8081 with 3000
+  // A prévia Web deve usar o backend de desenvolvimento atual do Manus.
+  // O endpoint público continua reservado para os binários nativos.
   if (ReactNative.Platform.OS === "web" && typeof window !== "undefined" && window.location) {
     const { protocol, hostname } = window.location;
     // Pattern: 8081-sandboxid.region.domain -> 3000-sandboxid.region.domain
@@ -50,6 +46,11 @@ export function getApiBaseUrl(): string {
     if (apiHostname !== hostname) {
       return `${protocol}//${apiHostname}`;
     }
+  }
+
+  // No APK/IPA, a URL pública configurada permanece a fonte de verdade.
+  if (API_BASE_URL) {
+    return API_BASE_URL.replace(/\/$/, "");
   }
 
   // Fallback to empty (will use relative URL)

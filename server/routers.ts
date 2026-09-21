@@ -171,9 +171,11 @@ export const appRouter = router({
           sheetConfidence: 95,
           plateConfidence: 95,
           whAmbiguous: verification.ambiguous !== false,
-          sheetVisible: verification.sheetVisible,
-          plateVisible: verification.plateVisible,
-          distinctItems: verification.distinctItems,
+          // A leitura inicial já confirmou os dois objetos distintos. A etapa
+          // W/H apenas confirma o caractere e não pode apagar as sequências.
+          sheetVisible: true,
+          plateVisible: true,
+          distinctItems: true,
         });
         console.info(`[conference] W/H verification completed in ${Math.round(performance.now() - startedAt)}ms`);
         return result;
