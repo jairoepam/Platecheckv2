@@ -18,6 +18,9 @@ const env = {
   appName: "Plate Check",
   appSlug: "conferencia-placas",
   logoUrl: "/manus-storage/conferencia-expressa-icon_2ca45fa3.png",
+  // O APK precisa apontar para o backend publicado; URLs de sandbox expiram
+  // e não podem ser embutidas como destino de produção.
+  apiBaseUrl: "https://conferexps-2kud7xzk.manus.space",
   scheme: `manus${timestamp}`,
   iosBundleId: bundleId,
   androidPackage: bundleId,
@@ -27,6 +30,10 @@ const config: ExpoConfig = {
   name: env.appName,
   slug: env.appSlug,
   version: "1.0.0",
+  extra: {
+    apiBaseUrl: env.apiBaseUrl,
+    eas: { projectId: "77ff80a0-a0ab-415a-9843-4c42b4cff4a8" },
+  },
   orientation: "portrait",
   icon: "./assets/images/icon.png",
   scheme: env.scheme,
@@ -114,11 +121,6 @@ const config: ExpoConfig = {
   experiments: {
     typedRoutes: true,
     reactCompiler: true,
-  },
-  extra: {
-    eas: {
-      projectId: "77ff80a0-a0ab-415a-9843-4c42b4cff4a8",
-    },
   },
 };
 
