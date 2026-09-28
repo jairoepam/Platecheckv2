@@ -104,3 +104,14 @@ O rollback restaurou a lógica anterior, que executa a confirmação extra em to
 - [x] Manter a revisão de segurança quando a confirmação W/H realmente falhar ou continuar ambígua.
 - [x] Validar testes, TypeScript, lint e build.
 - [ ] Repetir a foto na prévia atualizada para confirmar visualmente a letra sem traço.
+
+
+## Falso aprovado por caractere visualmente invertido — 2026-09-28
+
+- [x] Confirmar que o OCR textual podia ocultar uma diferença de desenho físico.
+- [x] Adicionar posições de incompatibilidade visual ao schema da leitura.
+- [x] Classificar posição visualmente espelhada, invertida ou rotacionada como Divergente.
+- [x] Adicionar teste com sequência igual no texto e uma posição visualmente incompatível.
+- [x] Validar testes, TypeScript, lint e build.
+- [ ] Repetir a foto do caso reportado após a atualização da prévia/APK.
+- [ ] Sincronizar esta correção no GitHub após a confirmação do usuário.

@@ -33,6 +33,21 @@ describe("conference sequence logic", () => {
     expect(result.differences).toBe(1);
   });
 
+  it("marks a visually inverted character as divergent even when OCR text matches", () => {
+    const result = buildConferenceResult({
+      ...bothItems,
+      sheet: "GKC3G05",
+      plate: "GKC3G05",
+      sheetConfidence: 99,
+      plateConfidence: 99,
+      visualMismatchPositions: [5],
+    });
+
+    expect(result.status).toBe("divergent");
+    expect(result.differences).toBe(1);
+    expect(result.characters[4].state).toBe("different");
+  });
+
   it("never considers W and H equivalent", () => {
     const result = buildConferenceResult({ ...bothItems, sheet: "UPW0A08", plate: "UPH0A08", sheetConfidence: 99, plateConfidence: 99, whAmbiguous: false });
     expect(result.status).toBe("divergent");
