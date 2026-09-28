@@ -80,9 +80,14 @@ function normalizedConfidence(value: unknown, fallback: number): number {
 
 function normalizedVisualMismatchPositions(value: unknown): number[] {
   if (!Array.isArray(value)) return [];
-  return value
+  const positions = value
     .map((position) => Number(position))
     .filter((position) => Number.isInteger(position) && position >= 1 && position <= 7);
+  const uniquePositions = [...new Set(positions)];
+  // A whole row marked as visually inverted is a known multimodal false positive
+  // (perspective, rotation, glare or plastic). Only a small, specific set of
+  // individually visible suspect positions may affect the deterministic result.
+  return uniquePositions.length <= 2 ? uniquePositions : [];
 }
 
 function unknownCharacters(sheet: string, plate: string): CharacterComparison[] {
