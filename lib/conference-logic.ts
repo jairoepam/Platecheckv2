@@ -27,6 +27,7 @@ export type ExtractedSequences = {
   sheetVisible?: unknown;
   plateVisible?: unknown;
   distinctItems?: unknown;
+  visualMismatchPositions?: unknown;
 };
 
 export const WH_CONFIDENCE_THRESHOLD = 90;
@@ -77,6 +78,13 @@ function normalizedConfidence(value: unknown, fallback: number): number {
   return Math.round(Math.max(0, Math.min(100, parsed)));
 }
 
+function normalizedVisualMismatchPositions(value: unknown): number[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((position) => Number(position))
+    .filter((position) => Number.isInteger(position) && position >= 1 && position <= 7);
+}
+
 function unknownCharacters(sheet: string, plate: string): CharacterComparison[] {
   return Array.from({ length: 7 }, (_, index) => ({
     position: index + 1,
@@ -104,6 +112,7 @@ export function buildConferenceResult(extraction: ExtractedSequences): Conferenc
   const sheetVisible = extraction.sheetVisible === true;
   const plateVisible = extraction.plateVisible === true;
   const distinctItems = extraction.distinctItems === true;
+  const visualMismatchPositions = normalizedVisualMismatchPositions(extraction.visualMismatchPositions);
   const bothItemsConfirmed = sheetVisible && plateVisible && distinctItems;
 
   if (!bothItemsConfirmed || !isValidPlateSequence(sheet) || !isValidPlateSequence(plate) || whAmbiguous) {
@@ -138,7 +147,7 @@ export function buildConferenceResult(extraction: ExtractedSequences): Conferenc
     position: index + 1,
     sheet: sheet[index],
     plate: plate[index],
-    state: (sheet[index] === plate[index] ? "match" : "different") as "match" | "different",
+    state: (visualMismatchPositions.includes(index + 1) || sheet[index] !== plate[index] ? "different" : "match") as "match" | "different",
   }));
   const differences = characters.filter((character) => character.state === "different").length;
 
