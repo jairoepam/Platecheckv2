@@ -48,6 +48,21 @@ describe("conference sequence logic", () => {
     expect(result.characters[4].state).toBe("different");
   });
 
+  it("ignores an implausible visual mismatch report covering the whole sequence", () => {
+    const result = buildConferenceResult({
+      ...bothItems,
+      sheet: "UDI9C11",
+      plate: "UDI9C11",
+      sheetConfidence: 95,
+      plateConfidence: 95,
+      visualMismatchPositions: [1, 2, 3, 4, 5, 6, 7],
+    });
+
+    expect(result.status).toBe("approved");
+    expect(result.differences).toBe(0);
+    expect(result.characters.every((character) => character.state === "match")).toBe(true);
+  });
+
   it("never considers W and H equivalent", () => {
     const result = buildConferenceResult({ ...bothItems, sheet: "UPW0A08", plate: "UPH0A08", sheetConfidence: 99, plateConfidence: 99, whAmbiguous: false });
     expect(result.status).toBe("divergent");
